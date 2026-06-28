@@ -1,0 +1,5191 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBS Emilia — Portale di Monitoraggio</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blu-notte: #1a0d16;
+    --blu-acciaio: #2a1122;
+    --rosa: #b3468d;
+    --rosa-hover: #9a3478;
+    --rosa-light: rgba(179,70,141,0.08);
+    --rosa-border: rgba(179,70,141,0.25);
+    --testo-chiaro: #f0f4f7;
+    --testo-muted: #8fa8b8;
+    --card-bg: rgba(42,17,34,0.7);
+    --card-border: rgba(179,70,141,0.2);
+    --oro: #d4a843;
+    --oro-light: rgba(212,168,67,0.18);
+    --input-bg: rgba(26,13,22,0.8);
+    --input-border: rgba(179,70,141,0.3);
+    --success: #3dbf8a;
+    --danger: #e05555;
+    --shadow: 0 4px 24px rgba(26,13,22,0.5);
+    --shadow-card: 0 2px 12px rgba(26,13,22,0.4);
+  }
+
+  html {
+    height: 100%;
+  }
+
+  body {
+    height: 100%;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--blu-notte);
+    color: var(--testo-chiaro);
+    /* overflow-x non impostato: permette scroll orizzontale ai figli con overflow-x: auto */
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--blu-notte); }
+  ::-webkit-scrollbar-thumb { background: var(--rosa-border); border-radius: 3px; }
+
+  /* ===== NAVBAR ===== */
+  .navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 58px;
+    background: rgba(26,13,22,0.97);
+    border-bottom: 1px solid var(--rosa-border);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    z-index: 1000;
+    backdrop-filter: blur(12px);
+    gap: 8px;
+  }
+
+  .navbar-brand {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--rosa);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-right: auto;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .navbar-brand span {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--rosa);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--rosa);
+  }
+
+  .nav-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--testo-muted);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--rosa-light);
+    border-color: var(--rosa-border);
+    color: var(--testo-chiaro);
+  }
+
+  .edition-badge {
+    background: var(--blu-acciaio);
+    border: 1px solid var(--rosa-border);
+    color: var(--rosa);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  /* ===== PAGES ===== */
+  .page { display: none; padding-top: 58px; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ===== HOME PAGE ===== */
+  .home-hero {
+    min-height: calc(100vh - 58px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px 40px;
+    background:
+      radial-gradient(ellipse at 70% 20%, rgba(179,70,141,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 20% 80%, rgba(42,17,34,0.8) 0%, transparent 60%),
+      linear-gradient(160deg, var(--blu-notte) 0%, #2a1122 100%);
+    text-align: center;
+  }
+
+  .home-logo-ring {
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    border: 2px solid var(--rosa-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+    position: relative;
+    background: radial-gradient(circle, rgba(179,70,141,0.1), transparent);
+    box-shadow: 0 0 40px rgba(179,70,141,0.15), inset 0 0 20px rgba(179,70,141,0.05);
+  }
+
+  .home-logo-ring::before {
+    content: '';
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    border: 1px solid rgba(179,70,141,0.1);
+  }
+
+  .home-logo-icon {
+    font-size: 2.6rem;
+    line-height: 1;
+  }
+
+  .home-title {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #fff 30%, var(--rosa) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+    line-height: 1.1;
+  }
+
+  .home-subtitle {
+    font-size: 0.95rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .home-edition-block {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 20px 32px;
+    margin-bottom: 50px;
+    min-width: 280px;
+    backdrop-filter: blur(8px);
+  }
+
+  .home-edition-label {
+    font-size: 0.72rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .home-edition-select {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--rosa);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23cf5896' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 38px;
+    transition: border-color 0.2s;
+  }
+
+  .home-edition-select:focus { border-color: var(--rosa); }
+  .home-edition-select option { background: var(--blu-notte); }
+
+  .home-nav-cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1100px;
+  }
+
+  .home-nav-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    min-width: 220px;
+    flex: 1;
+    cursor: pointer;
+    transition: all 0.3s;
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-nav-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--rosa), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .home-nav-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--rosa);
+    box-shadow: 0 8px 32px rgba(179,70,141,0.2);
+  }
+
+  .home-nav-card:hover::before { opacity: 1; }
+
+  .home-nav-card-icon {
+    font-size: 2rem;
+    width: 56px; height: 56px;
+    background: var(--rosa-light);
+    border: 1px solid var(--rosa-border);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .home-nav-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--testo-chiaro);
+  }
+
+  .home-nav-card-desc {
+    font-size: 0.78rem;
+    color: var(--testo-muted);
+    line-height: 1.5;
+  }
+
+  /* ===== SECTION CONTAINER ===== */
+  .section-wrap {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 36px 24px 60px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--testo-chiaro);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title span {
+    color: var(--rosa);
+  }
+
+  .section-subtitle {
+    font-size: 0.8rem;
+    color: var(--testo-muted);
+    margin-top: 3px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--rosa);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--rosa-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(179,70,141,0.35); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--rosa);
+    border: 1px solid var(--rosa-border);
+  }
+  .btn-outline:hover { background: var(--rosa-light); border-color: var(--rosa); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--testo-muted);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
+  .btn-ghost:hover { color: var(--testo-chiaro); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(224,85,85,0.25);
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+  .btn-danger:hover { background: rgba(224,85,85,0.1); }
+
+  .btn-print {
+    background: var(--blu-acciaio);
+    color: var(--testo-chiaro);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-print:hover { background: #3d1830; }
+
+  /* ===== TOGGLE SWITCH (base — usato per aziende) ===== */
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toggle {
+    position: relative;
+    width: 42px;
+    height: 22px;
+    cursor: pointer;
+  }
+
+  .toggle input { display: none; }
+
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.12);
+    transition: all 0.25s;
+  }
+
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--testo-muted);
+    top: 2px; left: 2px;
+    transition: all 0.25s;
+  }
+
+  .toggle input:checked + .toggle-slider {
+    background: rgba(179,70,141,0.25);
+    border-color: var(--rosa);
+  }
+
+  .toggle input:checked + .toggle-slider::before {
+    background: var(--rosa);
+    transform: translateX(20px);
+    box-shadow: 0 0 6px rgba(179,70,141,0.5);
+  }
+
+  .toggle-label {
+    font-size: 0.78rem;
+    color: var(--testo-muted);
+    min-width: 70px;
+  }
+
+  .toggle-label.on { color: var(--rosa); }
+
+  /* ===== TOGGLE PRESENZA (versione verde, più grande) ===== */
+  .toggle-presenza {
+    position: relative;
+    width: 56px;
+    height: 28px;
+    cursor: pointer;
+  }
+
+  .toggle-presenza input { display: none; }
+
+  .toggle-presenza .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 28px;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: all 0.25s;
+  }
+
+  .toggle-presenza .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--testo-muted);
+    top: 2px; left: 2px;
+    transition: all 0.25s;
+  }
+
+  .toggle-presenza input:checked + .toggle-slider {
+    background: rgba(61,191,138,0.3);
+    border-color: #3dbf8a;
+  }
+
+  .toggle-presenza input:checked + .toggle-slider::before {
+    background: #3dbf8a;
+    transform: translateX(28px);
+    box-shadow: 0 0 6px rgba(61,191,138,0.5);
+  }
+
+  .presenza-micro-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    margin-top: 3px;
+    text-align: center;
+    line-height: 1;
+    display: block;
+  }
+
+  .presenza-micro-label.presente { color: #3dbf8a; }
+  .presenza-micro-label.assente { color: #e05555; }
+
+  /* ===== PAGE 1 — GESTIONE CLIENTI ===== */
+  .partner-block {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+  }
+
+  .partner-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(179,70,141,0.07);
+    border-bottom: 1px solid var(--card-border);
+    cursor: pointer;
+  }
+
+  .partner-header:hover { background: rgba(179,70,141,0.12); }
+
+  .partner-chevron {
+    color: var(--rosa);
+    font-size: 0.9rem;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+
+  .partner-chevron.open { transform: rotate(90deg); }
+
+  .partner-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--rosa);
+    box-shadow: 0 0 6px rgba(179,70,141,0.5);
+    flex-shrink: 0;
+  }
+
+  .editable-name {
+    background: transparent;
+    border: none;
+    color: var(--testo-chiaro);
+    font-size: 1rem;
+    font-weight: 700;
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+  }
+
+  .editable-name:focus {
+    background: rgba(255,255,255,0.06);
+    cursor: text;
+  }
+
+  .partner-badge {
+    background: var(--rosa-light);
+    border: 1px solid var(--rosa-border);
+    color: var(--rosa);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .partner-body { padding: 16px 20px; display: none; }
+  .partner-body.open { display: block; }
+
+  /* MODIFICA 1 — Consulente block migliorato */
+  .consulente-block {
+    background: rgba(26,13,22,0.5);
+    border: 1px solid rgba(179,70,141,0.12);
+    border-left: 3px solid rgba(179,70,141,0.4);
+    border-radius: 12px;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+
+  .consulente-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    background: rgba(42,17,34,0.5);
+    border-bottom: 1px solid rgba(179,70,141,0.1);
+    cursor: pointer;
+  }
+
+  .consulente-header:hover { background: rgba(42,17,34,0.8); }
+
+  .consulente-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--testo-muted);
+    flex-shrink: 0;
+  }
+
+  .consulente-name-input {
+    background: transparent;
+    border: none;
+    color: var(--testo-chiaro);
+    font-size: 1rem;
+    font-weight: 600;
+    width: 100%;
+    outline: none;
+    padding: 2px 4px;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .consulente-name-input:focus { background: rgba(255,255,255,0.06); }
+
+  .consulente-body { padding: 16px 20px; display: none; }
+  .consulente-body.open { display: block; }
+
+  .azienda-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .azienda-name-input {
+    background: transparent;
+    border: none;
+    color: var(--testo-chiaro);
+    font-size: 0.85rem;
+    flex: 1;
+    outline: none;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+
+  .azienda-name-input:focus { background: rgba(255,255,255,0.05); }
+
+  .azienda-status {
+    font-size: 0.72rem;
+    color: var(--testo-muted);
+    white-space: nowrap;
+  }
+
+  .azienda-status.iscritta { color: var(--success); }
+
+  .add-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ===== PAGE 2 — REGISTRO ISCRITTI ===== */
+  .table-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1100px;
+  }
+
+  thead tr {
+    background: rgba(179,70,141,0.1);
+    border-bottom: 1px solid var(--rosa-border);
+  }
+
+  th {
+    padding: 13px 12px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--rosa);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .td-input {
+    background: transparent;
+    border: none;
+    color: var(--testo-chiaro);
+    font-size: 0.82rem;
+    width: 100%;
+    min-width: 90px;
+    outline: none;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+
+  .td-input:focus { background: rgba(255,255,255,0.07); }
+
+  /* MODIFICA 5 — Textarea programmazione */
+  .td-textarea {
+    background: transparent;
+    border: 1px solid rgba(179,70,141,0.2);
+    color: var(--testo-chiaro);
+    font-size: 0.82rem;
+    width: 100%;
+    min-width: 140px;
+    padding: 5px 7px;
+    border-radius: 6px;
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.4;
+  }
+
+  .td-textarea:focus { border-color: var(--rosa); background: rgba(255,255,255,0.05); }
+
+  .td-select {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--testo-chiaro);
+    font-size: 0.78rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    outline: none;
+    width: 100%;
+    min-width: 100px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .td-select option { background: var(--blu-notte); }
+
+  .td-number {
+    min-width: 80px;
+  }
+
+  .oro-highlight td {
+    background: var(--oro-light) !important;
+  }
+
+  .oro-highlight td:first-child {
+    border-left: 3px solid var(--oro);
+  }
+
+  .oro-value { color: var(--oro); font-weight: 700; }
+
+  .tipo-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  /* ===== PAGE 3 — LISTA FIRME ===== */
+  .firme-wrap {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .firme-header-block {
+    background: var(--blu-notte);
+    padding: 24px 32px;
+    text-align: center;
+    border-bottom: 3px solid var(--rosa);
+  }
+
+  .firme-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .firme-edition-label {
+    font-size: 0.85rem;
+    color: var(--rosa);
+    letter-spacing: 0.1em;
+  }
+
+  table.firme-table {
+    min-width: unset;
+    width: 100%;
+  }
+
+  table.firme-table thead tr {
+    background: #f5f5f5;
+    border-bottom: 2px solid #ddd;
+  }
+
+  table.firme-table th {
+    color: var(--blu-notte);
+    font-size: 0.78rem;
+    padding: 12px 16px;
+  }
+
+  table.firme-table td {
+    color: #1a1a1a;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.85rem;
+  }
+
+  table.firme-table tbody tr:hover td { background: #fdf5fa; }
+
+  .firma-cell {
+    min-width: 160px;
+    height: 40px;
+    border-bottom: 1px solid #999 !important;
+    background: transparent;
+  }
+
+  .num-cell {
+    color: var(--rosa);
+    font-weight: 700;
+    width: 40px;
+  }
+
+  /* ===== PAGE 4 — STORICO ===== */
+  .card-stat-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    backdrop-filter: blur(6px);
+  }
+
+  .card-stat-title {
+    font-size: 0.72rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .card-stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--rosa);
+    margin-bottom: 4px;
+  }
+
+  .card-stat-sub {
+    font-size: 0.8rem;
+    color: var(--testo-muted);
+  }
+
+  .filter-pill {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--testo-muted);
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .filter-pill:hover {
+    border-color: var(--rosa-border);
+    color: var(--testo-chiaro);
+  }
+
+  .filter-pill.active {
+    background: var(--rosa-light);
+    border-color: var(--rosa);
+    color: var(--rosa);
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--testo-muted);
+  }
+
+  .empty-state-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state-text { font-size: 0.9rem; }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--rosa-border), transparent);
+    margin: 24px 0;
+  }
+
+  /* ===== CORSO MANAGER ===== */
+  .corsi-manager {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(6px);
+  }
+
+  .corsi-manager summary {
+    cursor: pointer;
+    color: var(--testo-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .corsi-manager summary::-webkit-details-marker { display: none; }
+
+  .corsi-manager[open] summary { color: var(--rosa); }
+
+  .corsi-inner {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .corso-tag {
+    background: var(--rosa-light);
+    border: 1px solid var(--rosa-border);
+    color: var(--testo-chiaro);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .corso-tag-remove {
+    cursor: pointer;
+    color: var(--rosa);
+    font-size: 0.9rem;
+    line-height: 1;
+    opacity: 0.7;
+  }
+
+  .corso-tag-remove:hover { opacity: 1; }
+
+  .corso-add-wrap {
+    display: flex;
+    gap: 8px;
+  }
+
+  .corso-add-input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--testo-chiaro);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    outline: none;
+    width: 180px;
+  }
+
+  .corso-add-input:focus { border-color: var(--rosa); }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--blu-acciaio);
+    border: 1px solid var(--rosa-border);
+    color: var(--testo-chiaro);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    z-index: 9999;
+    box-shadow: var(--shadow);
+    transform: translateY(60px);
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ===== STAT PILLS ===== */
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .stat-pill {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100px;
+    backdrop-filter: blur(6px);
+  }
+
+  .stat-pill-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--rosa);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .stat-pill-label {
+    font-size: 0.68rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ===== LOGO OVERRIDES ===== */
+  #logo-osm {
+    width: 108px !important;
+    height: 108px !important;
+    object-fit: contain !important;
+    border-radius: 0 !important;
+  }
+
+  #logo-navbar {
+    height: 36px !important;
+    width: 36px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+  }
+
+  /* ===== REPORT PROGRAMMAZIONE ===== */
+  .report-wrap {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .report-header-block {
+    background: var(--blu-notte);
+    padding: 20px 32px;
+    text-align: center;
+    border-bottom: 3px solid var(--rosa);
+  }
+
+  .report-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .report-edition-sub {
+    font-size: 0.85rem;
+    color: var(--rosa);
+    letter-spacing: 0.1em;
+  }
+
+  table.report-table {
+    width: 100%;
+    min-width: unset;
+    border-collapse: collapse;
+  }
+
+  table.report-table thead tr {
+    background: #f5f5f5;
+    border-bottom: 2px solid #ddd;
+  }
+
+  table.report-table th {
+    color: var(--blu-notte);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 11px 14px;
+    text-align: left;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  table.report-table td {
+    color: #1a1a1a;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.84rem;
+    vertical-align: top;
+  }
+
+  table.report-table td.prog-cell {
+    white-space: pre-wrap;
+    max-width: 260px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  table.report-table tbody tr:nth-child(even) td {
+    background: #fdf5fa;
+  }
+
+  table.report-table tbody tr:hover td {
+    background: #fceef6;
+  }
+
+  .report-num-cell {
+    color: var(--rosa);
+    font-weight: 700;
+    width: 40px;
+  }
+
+  /* ===== PAGE 5 — DISPOSIZIONI BANCHI ===== */
+  .disp-controls {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(6px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+  }
+
+  .disp-controls-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 180px;
+  }
+
+  .disp-controls-label {
+    font-size: 0.7rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .disp-select {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--testo-chiaro);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    min-width: 200px;
+  }
+
+  .disp-select option { background: var(--blu-notte); }
+  .disp-select:focus { border-color: var(--rosa); }
+
+  .disp-schema-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .schema-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--testo-muted);
+    background: rgba(42,17,34,0.5);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 7px 13px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .schema-radio-label:hover { border-color: var(--rosa-border); color: var(--testo-chiaro); }
+  .schema-radio-label input { display: none; }
+  .schema-radio-label.sel { background: var(--rosa-light); border-color: var(--rosa); color: var(--testo-chiaro); }
+
+  .disp-piantina {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 24px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding: 24px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    backdrop-filter: blur(6px);
+    overflow-x: auto;
+  }
+
+  .disp-corridoio-label {
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+    color: var(--testo-muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 14px;
+  }
+
+  .disp-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .disp-riga-banchi {
+    display: flex;
+    gap: 8px;
+  }
+
+  .disp-column-label {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .disp-banco {
+    background: var(--blu-acciaio);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+    width: 180px;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .disp-banco.has-cliente {
+    background: var(--blu-notte);
+    border-color: rgba(179,70,141,0.3);
+  }
+
+  .disp-banco.sala-pratica {
+    border-color: var(--rosa) !important;
+    box-shadow: 0 0 0 2px rgba(179,70,141,0.25);
+  }
+
+  .disp-banco-num {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.2);
+    position: absolute;
+    top: 7px;
+    right: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .disp-banco-empty-label {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.15);
+    text-align: center;
+    margin: auto;
+  }
+
+  .disp-banco select.disp-cliente-sel {
+    background: rgba(26,13,22,0.7);
+    border: 1px solid rgba(179,70,141,0.2);
+    color: var(--testo-chiaro);
+    font-size: 0.75rem;
+    padding: 4px 6px;
+    border-radius: 6px;
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .disp-banco select.disp-cliente-sel option { background: var(--blu-notte); }
+
+  .disp-banco-corso {
+    font-size: 0.68rem;
+    color: var(--testo-muted);
+    padding: 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 176px;
+  }
+
+  .disp-banco select.disp-sup-sel {
+    background: rgba(42,17,34,0.8);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--testo-muted);
+    font-size: 0.68rem;
+    padding: 3px 5px;
+    border-radius: 5px;
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .disp-banco select.disp-sup-sel option { background: var(--blu-notte); }
+
+  .disp-sala-pratica-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .disp-sala-pratica-row label.toggle {
+    width: 36px; height: 18px;
+  }
+
+  .disp-sala-pratica-row .toggle-slider::before {
+    width: 12px; height: 12px;
+  }
+
+  .disp-sala-pratica-row span {
+    font-size: 0.65rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .disp-sala-pratica-row .toggle input:checked ~ span { color: var(--rosa); }
+
+  /* Span visibili solo in stampa — nascosti a schermo */
+  .disp-banco-print-nome,
+  .disp-banco-print-corso,
+  .disp-banco-print-sup,
+  .disp-banco-print-sala { display: none; }
+
+  /* Supervisori section */
+  .disp-supervisori-block {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(6px);
+  }
+
+  .disp-sup-table {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .disp-sup-table td {
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: middle;
+  }
+
+  .disp-sup-table tr:last-child td { border-bottom: none; }
+
+  .disp-sup-nome-input {
+    background: transparent;
+    border: none;
+    color: var(--testo-chiaro);
+    font-size: 0.82rem;
+    outline: none;
+    padding: 3px 5px;
+    border-radius: 4px;
+    width: 100%;
+  }
+
+  .disp-sup-nome-input:focus { background: rgba(255,255,255,0.07); }
+
+  .disp-add-sup-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-wrap: wrap;
+  }
+
+  .disp-add-sup-row input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--testo-chiaro);
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    outline: none;
+    width: 140px;
+  }
+
+  .disp-add-sup-row input:focus { border-color: var(--rosa); }
+
+  /* ===== PAGE 6 — FOGLIETTINI ===== */
+  .fogliettini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 4px;
+  }
+
+  .fogliettino-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    backdrop-filter: blur(6px);
+    transition: border-color 0.2s;
+  }
+
+  .fogliettino-card:hover { border-color: var(--rosa-border); }
+
+  .fogliettino-nome {
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--testo-chiaro);
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rosa-border);
+  }
+
+  .fogliettino-prog {
+    font-size: 0.85rem;
+    color: var(--testo-chiaro);
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .fogliettino-prog.empty {
+    color: var(--testo-muted);
+    font-style: italic;
+  }
+
+  /* ===== PRINT — BASE (Firme + Report) ===== */
+  @media print {
+    /* Base: nascondi tutto */
+    .navbar, .btn, .no-print, .corsi-manager, .stats-bar,
+    .section-header { display: none !important; }
+    body { background: #fff !important; color: #000 !important; }
+    .page { display: none !important; padding-top: 0 !important; }
+
+    /* Stampa Lista Firme (legacy) */
+    body.print-firme #page-firme { display: block !important; }
+    body.print-firme #page-firme .section-wrap { padding: 0 !important; }
+    body.print-firme .firme-wrap { border-radius: 0 !important; box-shadow: none !important; border: none !important; }
+    body.print-firme table.firme-table th { color: #000 !important; background: #f0f0f0 !important; }
+    body.print-firme table.firme-table td { color: #000 !important; }
+    body.print-firme table.firme-table thead tr { background: #f0f0f0 !important; }
+    body.print-firme .firme-header-block { background: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.print-firme .no-print-row { display: none !important; }
+
+    /* Stampa Lista Firme G1 */
+    @page { size: A4 landscape; }
+    body.print-firme-g1 #page-firme { display: block !important; }
+    body.print-firme-g1 #page-firme .section-wrap { padding: 0 !important; }
+    body.print-firme-g1 #firme-tab-g1 { display: block !important; }
+    body.print-firme-g1 #firme-tab-g2 { display: none !important; }
+    body.print-firme-g1 .firme-wrap { border-radius: 0 !important; box-shadow: none !important; border: none !important; }
+    body.print-firme-g1 table.firme-table th { color: #000 !important; background: #f0f0f0 !important; }
+    body.print-firme-g1 table.firme-table td { color: #000 !important; }
+    body.print-firme-g1 table.firme-table thead tr { background: #f0f0f0 !important; }
+    body.print-firme-g1 .firme-header-block { background: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* Stampa Lista Firme G2 */
+    body.print-firme-g2 #page-firme { display: block !important; }
+    body.print-firme-g2 #page-firme .section-wrap { padding: 0 !important; }
+    body.print-firme-g2 #firme-tab-g2 { display: block !important; }
+    body.print-firme-g2 #firme-tab-g1 { display: none !important; }
+    body.print-firme-g2 .firme-wrap { border-radius: 0 !important; box-shadow: none !important; border: none !important; }
+    body.print-firme-g2 table.firme-table th { color: #000 !important; background: #f0f0f0 !important; }
+    body.print-firme-g2 table.firme-table td { color: #000 !important; }
+    body.print-firme-g2 table.firme-table thead tr { background: #f0f0f0 !important; }
+    body.print-firme-g2 .firme-header-block { background: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* Stampa Report Programmazione */
+    body.print-report #page-report { display: block !important; }
+    body.print-report #page-report .section-wrap { padding: 0 !important; }
+    body.print-report .report-wrap { border-radius: 0 !important; box-shadow: none !important; border: none !important; }
+    body.print-report table.report-table th { color: #000 !important; background: #f0f0f0 !important; }
+    body.print-report table.report-table td { color: #000 !important; }
+    body.print-report .report-header-block { background: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  }
+
+  /* ===== PRINT — DISPOSIZIONI BANCHI (A4 landscape) ===== */
+  @media print {
+    /* Mostra solo la pagina disposizioni, senza padding navbar */
+    body.print-disposizione #page-disposizioni {
+      display: block !important;
+      width: 100% !important;
+      height: 100vh !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    /* Il section-wrap occupa tutto */
+    body.print-disposizione #page-disposizioni .section-wrap {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: none !important;
+      height: 100vh !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    /* Nascondi tutto tranne il wrapper piantina — solo figli diretti di section-wrap */
+    body.print-disposizione #page-disposizioni .section-wrap > *:not(#disp-piantina-wrap) {
+      display: none !important;
+    }
+
+    /* Il wrapper occupa tutto lo spazio residuo */
+    body.print-disposizione #disp-piantina-wrap {
+      flex: 1 !important;
+      display: flex !important;
+      height: 100vh !important;
+      width: 100% !important;
+    }
+
+    /* Forza visibilità piantina anche se JS ha messo display:none inline */
+    body.print-disposizione #disp-piantina {
+      display: flex !important;
+    }
+
+    /* La piantina riempie l'intera pagina con flex */
+    body.print-disposizione .disp-piantina {
+      flex: 1 !important;
+      width: 100% !important;
+      height: 100vh !important;
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      gap: 8px !important;
+      overflow: visible !important;
+      padding: 6px !important;
+      background: #fff !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      align-items: stretch !important;
+      justify-content: stretch !important;
+    }
+
+    /* Ogni colonna occupa spazio uguale */
+    body.print-disposizione .disp-column {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+    }
+
+    /* Ogni riga occupa spazio uguale nella colonna */
+    body.print-disposizione .disp-riga-banchi {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: row !important;
+      gap: 6px !important;
+    }
+
+    /* Ogni banco occupa spazio uguale nella riga */
+    body.print-disposizione .disp-banco {
+      flex: 1 !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      width: auto !important;
+      height: auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      padding: 5px !important;
+      border: 1px solid #999 !important;
+      background: #f5f5f5 !important;
+      border-radius: 4px !important;
+      overflow: hidden !important;
+      gap: 2px !important;
+    }
+
+    body.print-disposizione .disp-banco.sala-pratica {
+      border: 2px solid #b3468d !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Nascondi controlli interattivi */
+    body.print-disposizione .disp-banco select,
+    body.print-disposizione .disp-banco input,
+    body.print-disposizione .disp-banco .disp-sala-pratica-row,
+    body.print-disposizione .disp-banco-corso,
+    body.print-disposizione .disp-column-label,
+    body.print-disposizione .disp-banco-empty-label,
+    body.print-disposizione .disp-banco-num,
+    body.print-disposizione .disp-banco-print-sala {
+      display: none !important;
+    }
+
+    /* Separatore visibile tra colonne */
+    body.print-disposizione .disp-corridoio-label {
+      display: flex !important;
+      width: 10px !important;
+      min-width: 10px !important;
+      max-width: 10px !important;
+      flex-shrink: 0 !important;
+      background: #222 !important;
+      border-radius: 2px !important;
+      font-size: 0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Testo stampa visibile */
+    body.print-disposizione .disp-banco-print-nome {
+      display: block !important;
+      font-size: 9pt !important;
+      font-weight: bold !important;
+      color: #000 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    body.print-disposizione .disp-banco-print-corso {
+      display: block !important;
+      font-size: 7pt !important;
+      color: #333 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    body.print-disposizione .disp-banco-print-sup {
+      display: block !important;
+      font-size: 7pt !important;
+      color: #555 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+  }
+
+  /* ===== PRINT — FOGLIETTINI (A4 portrait, 3×4 = 12 per foglio) ===== */
+  @media print {
+    @page { size: A4 portrait; margin: 8mm; }
+    body.print-fogliettini #page-fogliettini { display: block !important; padding-top: 0 !important; }
+    body.print-fogliettini #page-fogliettini .section-wrap { padding: 0 !important; }
+    body.print-fogliettini .fogliettini-grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      grid-auto-rows: calc((297mm - 16mm) / 4) !important;
+      gap: 0 !important;
+    }
+    body.print-fogliettini .fogliettino-card {
+      background: #fff !important;
+      border: 1px solid #ccc !important;
+      border-radius: 0 !important;
+      padding: 6px 8px !important;
+      box-shadow: none !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      overflow: hidden !important;
+    }
+    body.print-fogliettini .fogliettino-nome {
+      font-size: 10pt !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      color: #000 !important;
+      border-bottom: 1px solid #b3468d !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      margin-bottom: 5px !important;
+      padding-bottom: 4px !important;
+      letter-spacing: 0.04em !important;
+    }
+    body.print-fogliettini .fogliettino-prog { font-size: 8pt !important; color: #000 !important; line-height: 1.5 !important; }
+    body.print-fogliettini .fogliettino-prog.empty { color: #999 !important; }
+    body.print-fogliettini .fogliettini-empty-state { display: none !important; }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    .home-nav-cards { flex-direction: column; }
+    .home-nav-card { min-width: unset; }
+    .navbar { padding: 0 14px; gap: 4px; }
+    .nav-btn { padding: 5px 9px; font-size: 0.74rem; }
+    .edition-badge { display: none; }
+  }
+
+  /* ===== PERSONE AZIENDA ===== */
+  .azienda-block {
+    margin-bottom: 8px;
+  }
+
+  .azienda-block .azienda-row {
+    margin-bottom: 0;
+    border-radius: 8px;
+  }
+
+  .persone-section {
+    background: rgba(26,13,22,0.6);
+    border: 1px solid rgba(179,70,141,0.15);
+    border-radius: 8px;
+    padding: 10px 14px 12px;
+    margin-top: 4px;
+    margin-left: 8px;
+    margin-right: 2px;
+  }
+
+  .persone-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .persona-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: rgba(42,17,34,0.5);
+    border-radius: 6px;
+    border: 1px solid rgba(179,70,141,0.12);
+  }
+
+  .persona-nome {
+    flex: 1;
+    font-size: 0.82rem;
+    color: var(--testo-chiaro);
+  }
+
+  .persona-add-wrap {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 6px;
+    border-top: 1px solid rgba(179,70,141,0.1);
+  }
+
+  .persona-input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--testo-chiaro);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    outline: none;
+    width: 130px;
+    transition: border-color 0.2s;
+  }
+
+  .persona-input:focus { border-color: var(--rosa); }
+
+  /* ===== PAGE 8 — INVENTARIO ===== */
+  .inv-table-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+  }
+
+  table.inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+  }
+
+  table.inv-table thead tr {
+    background: rgba(179,70,141,0.1);
+    border-bottom: 1px solid var(--rosa-border);
+  }
+
+  table.inv-table th {
+    padding: 13px 14px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--rosa);
+    white-space: nowrap;
+  }
+
+  table.inv-table td {
+    padding: 10px 14px;
+    font-size: 0.83rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: middle;
+  }
+
+  table.inv-table tr:last-child td { border-bottom: none; }
+  table.inv-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .inv-input {
+    background: transparent;
+    border: none;
+    color: var(--testo-chiaro);
+    font-size: 0.83rem;
+    width: 100%;
+    outline: none;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+
+  .inv-input:focus { background: rgba(255,255,255,0.07); }
+
+  .inv-input-num {
+    background: transparent;
+    border: none;
+    color: var(--testo-chiaro);
+    font-size: 0.83rem;
+    width: 80px;
+    outline: none;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-family: inherit;
+    text-align: center;
+  }
+
+  .inv-input-num:focus { background: rgba(255,255,255,0.07); }
+
+  .inv-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .inv-badge-ok {
+    background: rgba(61,191,138,0.15);
+    border: 1px solid rgba(61,191,138,0.35);
+    color: #3dbf8a;
+  }
+
+  .inv-badge-warn {
+    background: rgba(212,168,67,0.18);
+    border: 1px solid rgba(212,168,67,0.4);
+    color: #d4a843;
+  }
+
+  .inv-badge-danger {
+    background: rgba(224,85,85,0.15);
+    border: 1px solid rgba(224,85,85,0.35);
+    color: #e05555;
+  }
+
+  /* PRINT — INVENTARIO */
+  @media print {
+    body.print-inventario #page-inventario { display: block !important; padding-top: 0 !important; }
+    body.print-inventario #page-inventario .section-wrap { padding: 0 !important; }
+    body.print-inventario .inv-table-wrap { border-radius: 0 !important; box-shadow: none !important; border: none !important; }
+    body.print-inventario table.inv-table { min-width: unset !important; }
+    body.print-inventario table.inv-table th { color: #000 !important; background: #f0f0f0 !important; font-size: 9pt !important; }
+    body.print-inventario table.inv-table td { color: #000 !important; font-size: 9pt !important; }
+    body.print-inventario table.inv-table thead tr { background: #f0f0f0 !important; }
+    body.print-inventario .inv-input,
+    body.print-inventario .inv-input-num { color: #000 !important; }
+    body.print-inventario .inv-badge-ok { background: #d4f5e8 !important; border: 1px solid #3dbf8a !important; color: #1a7a56 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.print-inventario .inv-badge-warn { background: #fdf0cc !important; border: 1px solid #c9952a !important; color: #7a5c00 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.print-inventario .inv-badge-danger { background: #fde8e8 !important; border: 1px solid #e05555 !important; color: #8b1a1a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body.print-inventario .inv-print-header { display: block !important; text-align: center; padding: 12px 0 16px; font-size: 14pt; font-weight: 800; color: #000; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 3px solid #b3468d; margin-bottom: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  .inv-print-header { display: none; }
+
+  /* ===== MODALE TRASFERIMENTO ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,13,22,0.82);
+    backdrop-filter: blur(6px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-box {
+    background: var(--blu-acciaio);
+    border: 1px solid var(--rosa-border);
+    border-radius: 16px;
+    padding: 32px 28px 28px;
+    min-width: 340px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 12px 48px rgba(26,13,22,0.7);
+    position: relative;
+  }
+
+  .modal-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--testo-chiaro);
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+  }
+
+  .modal-subtitle {
+    font-size: 0.8rem;
+    color: var(--testo-muted);
+    margin-bottom: 22px;
+  }
+
+  .modal-field {
+    margin-bottom: 16px;
+  }
+
+  .modal-field label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .modal-field select {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--testo-chiaro);
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23cf5896' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 34px;
+    transition: border-color 0.2s;
+  }
+
+  .modal-field select:focus { border-color: var(--rosa); }
+  .modal-field select option { background: var(--blu-notte); }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    justify-content: flex-end;
+  }
+
+  /* ===== GRAFICO % FATTURATO IN CRESCITA — STORICO ===== */
+  .crescita-chart-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 28px;
+    margin-top: 28px;
+    backdrop-filter: blur(6px);
+  }
+
+  .crescita-chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .crescita-chart-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--testo-chiaro);
+    margin-bottom: 3px;
+  }
+
+  .crescita-chart-sub {
+    font-size: 0.75rem;
+    color: var(--testo-muted);
+  }
+
+  .crescita-inputs-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+
+  .crescita-input-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 120px;
+  }
+
+  .crescita-input-item label {
+    font-size: 0.67rem;
+    color: var(--testo-muted);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 130px;
+  }
+
+  .crescita-input-item input[type="number"] {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--rosa);
+    padding: 6px 10px;
+    border-radius: 7px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    outline: none;
+    width: 90px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .crescita-input-item input[type="number"]:focus { border-color: var(--rosa); }
+</style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+  <div class="navbar-brand" onclick="showPage('home')">
+    <span></span>
+    <img id="logo-navbar" src="img/Logo%20MBS.png" alt="MBS Emilia" style="height:36px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
+    MBS Emilia
+  </div>
+  <!-- Overlay caricamento -->
+  <div id="loading-overlay" style="position:fixed;inset:0;background:#1a0d16;display:flex;align-items:center;justify-content:center;z-index:9999;color:white;font-size:1.3rem;letter-spacing:0.06em;flex-direction:column;gap:16px;">
+    <div style="width:40px;height:40px;border:3px solid rgba(179,70,141,0.3);border-top-color:#b3468d;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    <span>Caricamento...</span>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+  <button class="nav-btn" onclick="showPage('home')" id="nav-home">Home</button>
+  <button class="nav-btn" onclick="showPage('clienti')" id="nav-clienti">Clienti</button>
+  <button class="nav-btn" onclick="showPage('iscritti')" id="nav-iscritti">Iscritti</button>
+  <button class="nav-btn" onclick="showPage('firme')" id="nav-firme">Firme</button>
+  <button class="nav-btn" onclick="showPage('storico')" id="nav-storico">Storico</button>
+  <button class="nav-btn" onclick="showPage('report')" id="nav-report">Report</button>
+  <button class="nav-btn" onclick="showPage('disposizioni')" id="nav-disposizioni">Banchi</button>
+  <button class="nav-btn" onclick="showPage('fogliettini')" id="nav-fogliettini">Fogliettini</button>
+  <button class="nav-btn" onclick="showPage('debriefing')" id="nav-debriefing">Debriefing</button>
+  <button class="nav-btn" onclick="showPage('inventario')" id="nav-inventario">Inventario</button>
+  <div class="edition-badge" id="navbar-edition">—</div>
+</nav>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== MODALE TRASFERIMENTO CLIENTE ===== -->
+<div class="modal-overlay" id="modal-trasferimento" style="display:none;" onclick="chiudiModaleTrasferimento(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">&#8651; Trasferisci Cliente</div>
+    <div class="modal-subtitle" id="modal-trasf-azienda-label">Sposta l'azienda ad un altro consulente</div>
+    <div class="modal-field">
+      <label>Partner di destinazione</label>
+      <select id="modal-trasf-partner" onchange="onTrasferimentoPartnerChange()"></select>
+    </div>
+    <div class="modal-field">
+      <label>Consulente di destinazione</label>
+      <select id="modal-trasf-consulente"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="chiudiModaleTrasferimento()">Annulla</button>
+      <button class="btn btn-primary" onclick="eseguiTrasferimento()">&#8651; Trasferisci</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: HOME ===== -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <div class="home-logo-ring">
+      <img id="logo-osm" src="img/Logo%20MBS.png" alt="MBS Emilia" style="width:170px;height:170px;object-fit:contain;" onerror="this.style.display='none'">
+      <div class="home-logo-icon" style="display:none">&#10024;</div>
+    </div>
+    <h1 class="home-title">MBS Emilia</h1>
+    <p class="home-subtitle">Portale di Monitoraggio</p>
+
+    <div class="home-edition-block">
+      <div class="home-edition-label">Edizione selezionata</div>
+      <select class="home-edition-select" id="edition-select" onchange="onEditionChange()"></select>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
+        <input type="text" id="new-edition-input" placeholder="Es. Luglio 2027"
+          style="flex:1;background:rgba(26,13,22,0.8);border:1px solid rgba(179,70,141,0.3);color:#f0f4f7;padding:8px 12px;border-radius:6px;font-size:0.85rem;outline:none;"
+          onkeydown="if(event.key==='Enter')addEdizione()">
+        <button class="btn btn-primary" style="padding:8px 14px;font-size:0.8rem;" onclick="addEdizione()">+ Aggiungi</button>
+        <button class="btn btn-danger" style="padding:8px 12px;font-size:0.8rem;" onclick="removeEdizioneCorrente()" title="Rimuovi edizione selezionata">&#215;</button>
+      </div>
+    </div>
+
+    <div class="home-nav-cards">
+      <div class="home-nav-card" onclick="showPage('clienti')">
+        <div class="home-nav-card-icon">&#128101;</div>
+        <div class="home-nav-card-title">Gestione Clienti</div>
+        <div class="home-nav-card-desc">Partner, consulenti e aziende iscritte all'edizione</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('iscritti')">
+        <div class="home-nav-card-icon">&#128203;</div>
+        <div class="home-nav-card-title">Registro Iscritti</div>
+        <div class="home-nav-card-desc">Partecipanti, presenze, fatturato e progressione corsi</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('firme')">
+        <div class="home-nav-card-icon">&#9998;</div>
+        <div class="home-nav-card-title">Lista Firme</div>
+        <div class="home-nav-card-desc">Foglio firme stampabile per l'aula</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('storico')">
+        <div class="home-nav-card-icon">&#128202;</div>
+        <div class="home-nav-card-title">Storico</div>
+        <div class="home-nav-card-desc">Grafico partecipanti per edizione e analisi fatturato</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('report')">
+        <div class="home-nav-card-icon">📋</div>
+        <div class="home-nav-card-title">Report Programmazione</div>
+        <div class="home-nav-card-desc">Esercizi e programmazione dei clienti presenti</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('disposizioni')">
+        <div class="home-nav-card-icon">🪑</div>
+        <div class="home-nav-card-title">Disposizioni Banchi</div>
+        <div class="home-nav-card-desc">Piantine nominali dell'aula, supervisori e sala pratica</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('fogliettini')">
+        <div class="home-nav-card-icon">🗒️</div>
+        <div class="home-nav-card-title">Fogliettini</div>
+        <div class="home-nav-card-desc">Fogliettini di programmazione stampabili per ogni cliente</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('debriefing')">
+        <div class="home-nav-card-icon">&#128203;</div>
+        <div class="home-nav-card-title">Debriefing</div>
+        <div class="home-nav-card-desc">Registro progressivo degli studenti per edizione</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('inventario')">
+        <div class="home-nav-card-icon">&#128230;</div>
+        <div class="home-nav-card-title">Inventario</div>
+        <div class="home-nav-card-desc">Elenco materiali con giacenze minime e stato scorte</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 1: GESTIONE CLIENTI ===== -->
+<div class="page" id="page-clienti">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-title">&#128101; Gestione <span>Clienti</span></div>
+        <div class="section-subtitle">Struttura Partner &rsaquo; Consulente &rsaquo; Azienda</div>
+      </div>
+      <button class="btn btn-primary" onclick="addPartner()">&#43; Aggiungi Partner</button>
+    </div>
+    <div id="partners-container"></div>
+    <div id="partners-empty" class="empty-state" style="display:none;">
+      <div class="empty-state-icon">&#128101;</div>
+      <div class="empty-state-text">Nessun partner ancora. Clicca "Aggiungi Partner" per iniziare.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 2: REGISTRO ISCRITTI ===== -->
+<div class="page" id="page-iscritti">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-title">&#128203; Registro <span>Iscritti</span></div>
+        <div class="section-subtitle" id="iscritti-edition-label">Edizione: —</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-outline no-print" onclick="syncFromClienti()">&#8635; Sincronizza da Clienti</button>
+        <button class="btn btn-primary no-print" onclick="addIscritto()">&#43; Aggiungi Iscritto</button>
+      </div>
+    </div>
+
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-pill">
+        <div class="stat-pill-value" id="stat-total">0</div>
+        <div class="stat-pill-label">Iscritti Totali</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-value" id="stat-presenti-g1">0</div>
+        <div class="stat-pill-label">Presenti G1</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-value" id="stat-presenti-g2">0</div>
+        <div class="stat-pill-label">Presenti G2</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-value" id="stat-presenti-both">0</div>
+        <div class="stat-pill-label">Presenti Entrambi</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-value" id="stat-fatturato">0</div>
+        <div class="stat-pill-label">Fatturato Medio %</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-value" id="stat-paganti">0</div>
+        <div class="stat-pill-label">Paganti</div>
+      </div>
+      <!-- Legacy per compatibilità JS -->
+      <div id="stat-presenti" style="display:none;">0</div>
+    </div>
+
+    <details class="corsi-manager no-print">
+      <summary>&#9881; Gestisci elenco corsi disponibili</summary>
+      <div class="corsi-inner">
+        <div id="corsi-tags"></div>
+        <div class="corso-add-wrap">
+          <input class="corso-add-input" id="nuovo-corso-input" type="text" placeholder="Nuovo corso..." onkeydown="if(event.key==='Enter')addCorso()">
+          <button class="btn btn-outline" style="padding:6px 12px;" onclick="addCorso()">&#43;</button>
+        </div>
+      </div>
+    </details>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="iscritti-table">
+          <thead>
+            <tr>
+              <th>Partner</th>
+              <th>Consulente</th>
+              <th>Nome</th>
+              <th>Cognome</th>
+              <th>Azienda</th>
+              <th>Presenza G1</th>
+              <th>Tipo G1</th>
+              <th>Presenza G2</th>
+              <th>Tipo G2</th>
+              <th>Incr. Fatturato %</th>
+              <th>Manuale / Corso</th>
+              <th>Esercizio</th>
+              <th>Programmazione</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="iscritti-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="iscritti-counter" class="no-print" style="text-align:right;padding:10px 16px 2px;font-size:0.88rem;color:var(--testo-muted);display:none;"></div>
+    <div id="iscritti-empty" class="empty-state" style="display:none;margin-top:12px;">
+      <div class="empty-state-icon">&#128203;</div>
+      <div class="empty-state-text">Nessun iscritto per questa edizione. Aggiungi manualmente o sincronizza da Clienti.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 3: LISTA FIRME ===== -->
+<div class="page" id="page-firme">
+  <div class="section-wrap">
+    <div class="section-header no-print">
+      <div>
+        <div class="section-title">&#9998; Lista <span>Firme</span></div>
+        <div class="section-subtitle">Solo iscritti con presenza attiva &bull; Ordinati per cognome</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-print no-print" onclick="printFirmeG(1)">&#128438; Stampa G1</button>
+        <button class="btn btn-print no-print" onclick="printFirmeG(2)">&#128438; Stampa G2</button>
+      </div>
+    </div>
+
+    <!-- Tab selector -->
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:16px;">
+      <button id="tab-firme-g1" class="btn btn-primary" onclick="switchFirmeTab(1)">Giorno 1</button>
+      <button id="tab-firme-g2" class="btn btn-outline" onclick="switchFirmeTab(2)">Giorno 2</button>
+    </div>
+
+    <!-- Tab G1 -->
+    <div id="firme-tab-g1">
+      <div class="firme-wrap">
+        <div class="firme-header-block">
+          <div class="firme-title">MBS Emilia — Giorno 1</div>
+          <div class="firme-edition-label" id="firme-edition-label">Lista Presenze — Edizione: —</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="firme-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">N.</th>
+                <th>Nome e Cognome</th>
+                <th>Azienda</th>
+                <th>Consulente</th>
+                <th style="min-width:180px;">Firma</th>
+              </tr>
+            </thead>
+            <tbody id="firme-tbody-g1"></tbody>
+          </table>
+        </div>
+        <div id="firme-empty-g1" class="empty-state" style="display:none;color:#666;">
+          <div class="empty-state-icon">&#9998;</div>
+          <div class="empty-state-text">Nessun iscritto presente al Giorno 1.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab G2 -->
+    <div id="firme-tab-g2" style="display:none;">
+      <div class="firme-wrap">
+        <div class="firme-header-block">
+          <div class="firme-title">MBS Emilia — Giorno 2</div>
+          <div class="firme-edition-label" id="firme-edition-label-g2">Lista Presenze — Edizione: —</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="firme-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">N.</th>
+                <th>Nome e Cognome</th>
+                <th>Azienda</th>
+                <th>Consulente</th>
+                <th style="min-width:180px;">Firma</th>
+              </tr>
+            </thead>
+            <tbody id="firme-tbody-g2"></tbody>
+          </table>
+        </div>
+        <div id="firme-empty-g2" class="empty-state" style="display:none;color:#666;">
+          <div class="empty-state-icon">&#9998;</div>
+          <div class="empty-state-text">Nessun iscritto presente al Giorno 2.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legacy: elementi nascosti per compatibilità JS -->
+    <div id="firme-tbody" style="display:none;"></div>
+    <div id="firme-empty" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE 4: STORICO ===== -->
+<div class="page" id="page-storico">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-title">&#128202; Storico <span>MBS Emilia</span></div>
+        <div class="section-subtitle">Partecipanti per edizione &middot; Analisi fatturato</div>
+      </div>
+    </div>
+
+    <!-- Filtro per anno -->
+    <div style="margin-bottom:12px;">
+      <div style="font-size:0.72rem;color:var(--testo-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Filtra per anno</div>
+      <div id="storico-anni-pills" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+
+    <details class="corsi-manager no-print" style="margin-bottom:16px;">
+      <summary>🗓️ Mostra/nascondi edizioni dal grafico</summary>
+      <div id="storico-edizioni-pills" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </details>
+
+    <!-- Filtri pill per tipo corso -->
+    <div class="stats-bar" style="margin-bottom:12px;" id="storico-filtri">
+      <button class="filter-pill active" onclick="setStoricoFilter('Tutti', this)">Tutti</button>
+      <button class="filter-pill" onclick="setStoricoFilter('Pagante', this)">Paganti</button>
+      <button class="filter-pill" onclick="setStoricoFilter('Ospite', this)">Ospiti</button>
+      <button class="filter-pill" onclick="setStoricoFilter('Diplomato', this)">Diplomati</button>
+      <button class="filter-pill" onclick="setStoricoFilter('Open-Day', this)">Open-Day</button>
+    </div>
+
+    <!-- Filtri pill per tipo presenza -->
+    <div style="margin-bottom:24px;">
+      <div style="font-size:0.72rem;color:var(--testo-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Filtra per tipo presenza</div>
+      <div class="stats-bar" id="storico-presenza-filtri">
+        <button class="filter-pill active" onclick="setStoricoPresenzaFilter('tutti', this)">Tutti</button>
+        <button class="filter-pill" onclick="setStoricoPresenzaFilter('soloG1', this)">Solo Giorno 1</button>
+        <button class="filter-pill" onclick="setStoricoPresenzaFilter('soloG2', this)">Solo Giorno 2</button>
+        <button class="filter-pill" onclick="setStoricoPresenzaFilter('entrambi', this)">Entrambi i giorni</button>
+      </div>
+    </div>
+
+    <!-- Grafico -->
+    <div class="table-wrap" style="padding:28px;margin-bottom:28px;">
+      <canvas id="storico-chart" height="310"></canvas>
+      <div style="text-align:center;font-size:0.72rem;color:#3dbf8a;margin-top:6px;">
+        % = clienti presenti con incremento fatturato &gt; 0
+      </div>
+    </div>
+
+    <!-- Riquadri statistiche -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:28px;">
+
+      <div class="card-stat-box" id="top-cliente-box">
+        <div class="card-stat-title">&#127942; Miglior Incremento Fatturato</div>
+        <div class="card-stat-value" id="top-cliente-name">—</div>
+        <div class="card-stat-sub" id="top-cliente-val">—</div>
+      </div>
+
+      <div class="card-stat-box" id="crescita-box">
+        <div class="card-stat-title">&#128200; Clienti con Fatturato in Crescita</div>
+        <div class="card-stat-value" id="crescita-perc">—%</div>
+        <div class="card-stat-sub" id="crescita-sub">su tutti gli iscritti con dati</div>
+      </div>
+
+    </div>
+
+    <!-- Grafico % clienti con fatturato in crescita per edizione -->
+    <div class="crescita-chart-wrap">
+      <div class="crescita-chart-header">
+        <div>
+          <div class="crescita-chart-title">&#128200; % Clienti con Fatturato in Crescita — per Edizione</div>
+          <div class="crescita-chart-sub">Dato inserito manualmente da Lorenzo. Valore 0–100% per edizione.</div>
+        </div>
+      </div>
+      <div class="crescita-inputs-grid" id="crescita-inputs-container"></div>
+      <div style="overflow-x:auto;">
+        <canvas id="crescita-edizioni-chart" height="220"></canvas>
+      </div>
+      <div style="text-align:center;font-size:0.72rem;color:rgba(212,168,67,0.75);margin-top:8px;">
+        &#8213; Linea tratteggiata = tendenza (visibile con almeno 2 edizioni)
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:28px;">
+      <div style="padding:18px 20px 10px;border-bottom:1px solid var(--rosa-border);">
+        <div class="section-title" style="font-size:1.1rem;">Storico per Cliente</div>
+        <div style="font-size:0.78rem;color:var(--testo-muted);margin-top:4px;">Tutti i clienti iscritti — edizioni frequentate e presenze</div>
+      </div>
+      <div class="table-scroll">
+        <table id="storico-clienti-table">
+          <thead>
+            <tr>
+              <th>Nome e Cognome</th>
+              <th>Azienda</th>
+              <th>Consulente</th>
+              <th style="text-align:center;">Edizioni Iscritto</th>
+              <th style="text-align:center;">Edizioni Presente</th>
+              <th>Edizioni frequentate</th>
+            </tr>
+          </thead>
+          <tbody id="storico-clienti-tbody"></tbody>
+        </table>
+      </div>
+      <div id="storico-clienti-empty" class="empty-state" style="display:none;">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-text">Nessun dato disponibile.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== FIREBASE ===== -->
+<script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDMwBTaewsaXajevMR3rpaKGKvAJ51iAfk",
+    authDomain: "academy-beauty-f05ae.firebaseapp.com",
+    projectId: "academy-beauty-f05ae",
+    storageBucket: "academy-beauty-f05ae.firebasestorage.app",
+    messagingSenderId: "112109525390",
+    appId: "1:112109525390:web:58338eea91923b9e8c2cdf"
+  };
+  const _fbApp = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+// ===== STATO GLOBALE =====
+let state = {
+  edition: 'Maggio 2026',
+  edizioni: [
+    'Gennaio 2025','Febbraio 2025','Marzo 2025','Aprile 2025','Maggio 2025','Giugno 2025',
+    'Luglio 2025','Agosto 2025','Settembre 2025','Ottobre 2025','Novembre 2025','Dicembre 2025',
+    'Gennaio 2026','Febbraio 2026','Marzo 2026','Aprile 2026','Maggio 2026','Giugno 2026',
+    'Luglio 2026','Agosto 2026','Settembre 2026','Ottobre 2026','Novembre 2026','Dicembre 2026',
+    'Gennaio 2027','Febbraio 2027','Marzo 2027','Aprile 2027','Maggio 2027','Giugno 2027'
+  ],
+  partners: [],
+  iscritti: [],
+  disposizioni: [],
+  debriefing: [],
+  inventario: [],
+  corsi: [
+    'MBS - Sezione Gestione d\'Impresa',
+    'MBS - Sezione Marketing',
+    'MBS - Sezione Vendite',
+    'MBS - Sezione Gestione finanziaria',
+    'MBS - Sezione Basi dell\'organizzazione ed espansione',
+    'MBS - Sezione Gestione pressioni',
+    'MBS + - Sezione Time Management',
+    'MBS + - Sezione Delega Efficace',
+    'MBS + - Sezione Incentivazione',
+    'MBS + - Sezione Riunioni',
+    'MBS + - Sezione Reclutamento',
+    'Manuale Leadership',
+    'Manuale Etica',
+    'Rimedio statistiche in calo',
+    'Rimedio programmazione ed efficienza'
+  ]
+};
+
+// ===== UTILITY =====
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+async function save() {
+  try {
+    await db.collection('portali').doc('mbs-emilia').set(state);
+  } catch(e) {
+    console.error('[MBS Emilia Portale] Errore salvataggio Firestore:', e);
+  }
+}
+
+async function load() {
+  try {
+    const docSnap = await db.collection('portali').doc('mbs-emilia').get();
+    if (docSnap.exists) {
+      const parsed = docSnap.data();
+      // Preserva le edizioni di default + quelle custom salvate
+      const edizioniDefault = state.edizioni.slice();
+      state = Object.assign(state, parsed);
+      // Merge: unisci edizioni default con quelle salvate (evita duplicati)
+      if (parsed.edizioni) {
+        const merged = [...new Set([...edizioniDefault, ...parsed.edizioni])];
+        state.edizioni = merged;
+      }
+    }
+  } catch(e) {
+    console.error('[MBS Emilia] Errore caricamento Firestore:', e);
+    showErrorOverlay('Impossibile connettersi al database. Controlla la connessione e ricarica la pagina.');
+  }
+  // Inizializza disposizioni se non presenti
+  if (!state.disposizioni) state.disposizioni = [];
+  if (!state.debriefing) state.debriefing = [];
+  if (!state.inventario) state.inventario = [];
+  if (!state.crescitaPerEdizione) state.crescitaPerEdizione = {};
+  // ===== MIGRAZIONE: presenzaG1/G2 tipoG1/G2 per doppia giornata =====
+  state.iscritti.forEach(i => {
+    if (i.presenzaG1 === undefined) { i.presenzaG1 = i.presenza || false; i.presenzaG2 = false; }
+    if (i.tipoG1 === undefined) { i.tipoG1 = i.tipo || 'Pagante'; i.tipoG2 = 'Pagante'; }
+  });
+  // ===== MIGRAZIONE: consolida nomi iscritti in persone[] delle aziende =====
+  migratePersoneFromIscritti();
+}
+
+function migratePersoneFromIscritti() {
+  // Per ogni record iscritti con nome/cognome, verifica se la persona
+  // esiste già nell'azienda corrispondente; se no, aggiungila.
+  let migrated = 0;
+  state.iscritti.forEach(isc => {
+    if (!isc.nome && !isc.cognome) return;
+    if (!isc.azienda) return;
+    // Trova l'azienda corrispondente
+    state.partners.forEach(partner => {
+      if (partner.name !== isc.partner) return;
+      partner.consulenti.forEach(cons => {
+        if (cons.name !== isc.consulente) return;
+        cons.aziende.forEach(az => {
+          if (az.name !== isc.azienda) return;
+          if (!az.persone) az.persone = [];
+          const nome = (isc.nome || '').trim();
+          const cognome = (isc.cognome || '').trim();
+          const exists = az.persone.some(p =>
+            p.nome.toLowerCase() === nome.toLowerCase() &&
+            p.cognome.toLowerCase() === cognome.toLowerCase()
+          );
+          if (!exists) {
+            az.persone.push({ id: uid(), nome, cognome });
+            migrated++;
+          }
+        });
+      });
+    });
+  });
+  if (migrated > 0) {
+    save();
+    console.log('[MBS Emilia] Migrazione persone completata:', migrated, 'persone consolidate.');
+  }
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function formatEur(val) {
+  const n = parseFloat(val) || 0;
+  return '€ ' + n.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+// ===== NAVIGAZIONE =====
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'iscritti') renderIscritti();
+  if (name === 'firme') renderFirme();
+  if (name === 'report') renderReport();
+  if (name === 'clienti') renderPartners();
+  if (name === 'storico') renderStorico();
+  if (name === 'disposizioni') renderDisposizioni();
+  if (name === 'fogliettini') renderFogliettini();
+  if (name === 'debriefing') { syncDebriefing(); renderDebriefing(); }
+  if (name === 'inventario') renderInventario();
+  window.scrollTo(0, 0);
+}
+
+function onEditionChange() {
+  state.edition = document.getElementById('edition-select').value;
+  document.getElementById('navbar-edition').textContent = state.edition;
+  save();
+  renderAll();
+}
+
+function updateEditionLabels() {
+  document.getElementById('navbar-edition').textContent = state.edition;
+  const sel = document.getElementById('edition-select');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === state.edition) { sel.selectedIndex = i; break; }
+  }
+  const il = document.getElementById('iscritti-edition-label');
+  if (il) il.textContent = 'Edizione: ' + state.edition;
+  const fl = document.getElementById('firme-edition-label');
+  if (fl) fl.textContent = 'Lista Presenze — Edizione: ' + state.edition;
+}
+
+// ===== ISCRIZIONI PROGRESSIVE =====
+function getPrevEdizione(edition) {
+  const idx = state.edizioni.indexOf(edition);
+  if (idx <= 0) return null;
+  return state.edizioni[idx - 1];
+}
+
+function isIscrittaInEdizione(az, edition) {
+  if (!az.iscrittaEdizioni) return false;
+  if (az.iscrittaEdizioni.hasOwnProperty(edition)) {
+    return az.iscrittaEdizioni[edition];
+  }
+  const prev = getPrevEdizione(edition);
+  if (prev) return isIscrittaInEdizione(az, prev);
+  return false;
+}
+
+// ===== PAGE 1: PARTNERS =====
+function renderPartners() {
+  const container = document.getElementById('partners-container');
+  const empty = document.getElementById('partners-empty');
+  container.innerHTML = '';
+
+  if (state.partners.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  state.partners.forEach((partner, pi) => {
+    const iscritteCount = partner.consulenti.reduce((acc, c) =>
+      acc + c.aziende.filter(a => isIscrittaInEdizione(a, state.edition)).length, 0);
+
+    const pBlock = document.createElement('div');
+    pBlock.className = 'partner-block';
+    pBlock.innerHTML = `
+      <div class="partner-header" onclick="togglePartner(${pi})">
+        <div class="partner-chevron ${partner.open ? 'open' : ''}" id="pchev-${pi}">&#9658;</div>
+        <div class="partner-dot"></div>
+        <input class="editable-name" type="text" value="${escHtml(partner.name)}"
+          onclick="event.stopPropagation()"
+          onchange="updatePartnerName(${pi}, this.value)"
+          placeholder="Nome Partner">
+        <span class="partner-badge">${iscritteCount} iscritte</span>
+        <button class="btn btn-danger" onclick="event.stopPropagation();removePartner(${pi})">&#215;</button>
+      </div>
+      <div class="partner-body ${partner.open ? 'open' : ''}" id="pbody-${pi}">
+        <div id="consulenti-${pi}"></div>
+        <div class="add-section">
+          <button class="btn btn-ghost" onclick="addConsulente(${pi})">&#43; Aggiungi Consulente</button>
+        </div>
+      </div>`;
+    container.appendChild(pBlock);
+
+    const cContainer = pBlock.querySelector(`#consulenti-${pi}`);
+    partner.consulenti.forEach((cons, ci) => {
+      renderConsulente(cContainer, pi, ci);
+    });
+  });
+}
+
+function renderConsulente(container, pi, ci) {
+  const cons = state.partners[pi].consulenti[ci];
+  const cBlock = document.createElement('div');
+  cBlock.className = 'consulente-block';
+  cBlock.innerHTML = `
+    <div class="consulente-header" onclick="toggleConsulente(${pi},${ci})">
+      <div class="partner-chevron ${cons.open ? 'open' : ''}" id="cchev-${pi}-${ci}">&#9658;</div>
+      <div class="consulente-dot"></div>
+      <input class="consulente-name-input" type="text" value="${escHtml(cons.name)}"
+        onclick="event.stopPropagation()"
+        onchange="updateConsulenteName(${pi},${ci},this.value)"
+        placeholder="Nome Consulente">
+      <button class="btn btn-danger" style="margin-left:auto;" onclick="event.stopPropagation();removeConsulente(${pi},${ci})">&#215;</button>
+    </div>
+    <div class="consulente-body ${cons.open ? 'open' : ''}" id="cbody-${pi}-${ci}">
+      <div id="aziende-${pi}-${ci}"></div>
+      <div class="add-section">
+        <button class="btn btn-ghost" style="font-size:0.76rem;" onclick="addAzienda(${pi},${ci})">&#43; Aggiungi Azienda</button>
+      </div>
+    </div>`;
+  container.appendChild(cBlock);
+
+  const aContainer = cBlock.querySelector(`#aziende-${pi}-${ci}`);
+  cons.aziende.forEach((az, ai) => {
+    renderAzienda(aContainer, pi, ci, ai);
+  });
+}
+
+function renderAzienda(container, pi, ci, ai) {
+  const az = state.partners[pi].consulenti[ci].aziende[ai];
+  if (!az.persone) az.persone = [];
+  const personeHtml = az.persone.map((p, pIdx) => `
+    <div class="persona-row" id="persona-row-${pi}-${ci}-${ai}-${pIdx}">
+      <span class="persona-nome">${escHtml(p.nome)} ${escHtml(p.cognome)}</span>
+      <button class="btn btn-danger" style="padding:2px 7px;font-size:0.72rem;" onclick="removePersonaAzienda(${pi},${ci},${ai},${pIdx})">&#215;</button>
+    </div>`).join('');
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'azienda-block';
+  wrapper.innerHTML = `
+    <div class="azienda-row">
+      <input class="azienda-name-input" type="text" value="${escHtml(az.name)}"
+        onchange="updateAziendaName(${pi},${ci},${ai},this.value)"
+        placeholder="Nome Azienda">
+      <div class="toggle-wrap">
+        <label class="toggle">
+          <input type="checkbox" ${isIscrittaInEdizione(az, state.edition) ? 'checked' : ''} onchange="toggleAzienda(${pi},${ci},${ai},this.checked)">
+          <div class="toggle-slider"></div>
+        </label>
+        <span class="azienda-status ${isIscrittaInEdizione(az, state.edition) ? 'iscritta' : ''}" id="azst-${pi}-${ci}-${ai}">
+          ${isIscrittaInEdizione(az, state.edition) ? 'Iscritta' : 'Non iscritta'}
+        </span>
+      </div>
+      <button class="btn btn-ghost" style="padding:3px 8px;font-size:0.72rem;color:var(--rosa);border-color:rgba(179,70,141,0.3);" onclick="togglePersoneAzienda(${pi},${ci},${ai})">
+        &#128100; ${az.persone.length > 0 ? az.persone.length + ' pers.' : 'Persone'}
+      </button>
+      <button class="btn btn-ghost" style="padding:3px 8px;font-size:0.72rem;color:var(--testo-muted);border-color:rgba(255,255,255,0.12);" title="Trasferisci azienda" onclick="apriModaleTrasferimento(${pi},${ci},${ai})">&#8651;</button>
+      <button class="btn btn-danger" onclick="removeAzienda(${pi},${ci},${ai})">&#215;</button>
+    </div>
+    <div class="persone-section" id="persone-section-${pi}-${ci}-${ai}" style="display:${az.personeOpen ? 'block' : 'none'};">
+      <div class="persone-list" id="persone-list-${pi}-${ci}-${ai}">
+        ${personeHtml}
+      </div>
+      <div class="persona-add-wrap" id="persona-add-wrap-${pi}-${ci}-${ai}">
+        <input class="persona-input" type="text" placeholder="Nome" id="persona-nome-${pi}-${ci}-${ai}">
+        <input class="persona-input" type="text" placeholder="Cognome" id="persona-cognome-${pi}-${ci}-${ai}"
+          onkeydown="if(event.key==='Enter')addPersonaAzienda(${pi},${ci},${ai})">
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:0.78rem;" onclick="addPersonaAzienda(${pi},${ci},${ai})">&#43; Aggiungi</button>
+      </div>
+    </div>`;
+  container.appendChild(wrapper);
+}
+
+function togglePersoneAzienda(pi, ci, ai) {
+  const az = state.partners[pi].consulenti[ci].aziende[ai];
+  az.personeOpen = !az.personeOpen;
+  const sec = document.getElementById(`persone-section-${pi}-${ci}-${ai}`);
+  if (sec) sec.style.display = az.personeOpen ? 'block' : 'none';
+  // aggiorna testo bottone senza re-render completo
+  save();
+}
+
+function addPersonaAzienda(pi, ci, ai) {
+  const nomeEl = document.getElementById(`persona-nome-${pi}-${ci}-${ai}`);
+  const cognomeEl = document.getElementById(`persona-cognome-${pi}-${ci}-${ai}`);
+  const nome = (nomeEl ? nomeEl.value.trim() : '');
+  const cognome = (cognomeEl ? cognomeEl.value.trim() : '');
+  if (!nome && !cognome) { toast('Inserisci almeno nome o cognome'); return; }
+  const az = state.partners[pi].consulenti[ci].aziende[ai];
+  if (!az.persone) az.persone = [];
+  // Evita duplicati
+  const dup = az.persone.some(p => p.nome.toLowerCase() === nome.toLowerCase() && p.cognome.toLowerCase() === cognome.toLowerCase());
+  if (dup) { toast('Persona già presente in questa azienda'); return; }
+  az.persone.push({ id: uid(), nome, cognome });
+  save();
+  renderPartners();
+  toast('Persona aggiunta: ' + nome + ' ' + cognome);
+}
+
+function removePersonaAzienda(pi, ci, ai, pIdx) {
+  const az = state.partners[pi].consulenti[ci].aziende[ai];
+  const p = az.persone[pIdx];
+  az.persone.splice(pIdx, 1);
+  save();
+  renderPartners();
+  toast('Persona rimossa: ' + (p ? p.nome + ' ' + p.cognome : ''));
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function togglePartner(pi) {
+  state.partners[pi].open = !state.partners[pi].open;
+  save();
+  renderPartners();
+}
+
+function toggleConsulente(pi, ci) {
+  state.partners[pi].consulenti[ci].open = !state.partners[pi].consulenti[ci].open;
+  save();
+  renderPartners();
+}
+
+function addPartner() {
+  state.partners.push({ id: uid(), name: 'Nuovo Partner', open: true, consulenti: [] });
+  save();
+  renderPartners();
+  toast('Partner aggiunto');
+}
+
+function removePartner(pi) {
+  if (!confirm('Rimuovere questo partner e tutti i suoi dati?')) return;
+  state.partners.splice(pi, 1);
+  save();
+  renderPartners();
+  toast('Partner rimosso');
+}
+
+function addConsulente(pi) {
+  state.partners[pi].consulenti.push({ id: uid(), name: 'Nuovo Consulente', open: true, aziende: [] });
+  save();
+  renderPartners();
+  toast('Consulente aggiunto');
+}
+
+function removeConsulente(pi, ci) {
+  if (!confirm('Rimuovere questo consulente?')) return;
+  state.partners[pi].consulenti.splice(ci, 1);
+  save();
+  renderPartners();
+  toast('Consulente rimosso');
+}
+
+function addAzienda(pi, ci) {
+  state.partners[pi].consulenti[ci].aziende.push({ id: uid(), name: 'Nuova Azienda', iscrittaEdizioni: {}, persone: [] });
+  save();
+  renderPartners();
+  toast('Azienda aggiunta');
+}
+
+function removeAzienda(pi, ci, ai) {
+  state.partners[pi].consulenti[ci].aziende.splice(ai, 1);
+  save();
+  renderPartners();
+  toast('Azienda rimossa');
+}
+
+function updatePartnerName(pi, val) {
+  state.partners[pi].name = val;
+  save();
+}
+
+function updateConsulenteName(pi, ci, val) {
+  state.partners[pi].consulenti[ci].name = val;
+  save();
+}
+
+function updateAziendaName(pi, ci, ai, val) {
+  state.partners[pi].consulenti[ci].aziende[ai].name = val;
+  save();
+}
+
+function toggleAzienda(pi, ci, ai, checked) {
+  const az = state.partners[pi].consulenti[ci].aziende[ai];
+  if (!az.iscrittaEdizioni) az.iscrittaEdizioni = {};
+  az.iscrittaEdizioni[state.edition] = checked;
+  save();
+  const span = document.getElementById(`azst-${pi}-${ci}-${ai}`);
+  if (span) {
+    span.textContent = checked ? 'Iscritta' : 'Non iscritta';
+    span.className = 'azienda-status' + (checked ? ' iscritta' : '');
+  }
+}
+
+// ===== PAGE 2: ISCRITTI =====
+function getCorsiOptions(selected) {
+  return state.corsi.map(c =>
+    `<option value="${escHtml(c)}" ${c === selected ? 'selected' : ''}>${escHtml(c)}</option>`
+  ).join('');
+}
+
+// Auto-popola il Registro Iscritti a partire da persone[] dell'anagrafica
+function autoPopulateFromPersone() {
+  let added = 0;
+  state.partners.forEach(partner => {
+    partner.consulenti.forEach(cons => {
+      cons.aziende.filter(az => isIscrittaInEdizione(az, state.edition)).forEach(az => {
+        if (!az.persone) az.persone = [];
+        az.persone.forEach(persona => {
+          const exists = state.iscritti.some(i =>
+            i.edition === state.edition &&
+            i.azienda === az.name &&
+            i.partner === partner.name &&
+            i.consulente === cons.name &&
+            (i.nome || '').toLowerCase() === persona.nome.toLowerCase() &&
+            (i.cognome || '').toLowerCase() === persona.cognome.toLowerCase()
+          );
+          if (!exists) {
+            state.iscritti.push({
+              id: uid(),
+              edition: state.edition,
+              partner: partner.name,
+              consulente: cons.name,
+              nome: persona.nome,
+              cognome: persona.cognome,
+              azienda: az.name,
+              presenza: false,
+              tipo: 'Open-Day',
+              presenzaG1: false,
+              presenzaG2: false,
+              tipoG1: 'Pagante',
+              tipoG2: 'Pagante',
+              fatturato: '',
+              corso: '',
+              esercizio: '',
+              programmazione: ''
+            });
+            added++;
+          }
+        });
+        // Se l'azienda è iscritta ma non ha persone, aggiungi comunque un record vuoto se non esiste nessuno
+        if (az.persone.length === 0) {
+          const existsAny = state.iscritti.some(i =>
+            i.edition === state.edition &&
+            i.azienda === az.name &&
+            i.partner === partner.name &&
+            i.consulente === cons.name
+          );
+          if (!existsAny) {
+            state.iscritti.push({
+              id: uid(),
+              edition: state.edition,
+              partner: partner.name,
+              consulente: cons.name,
+              nome: '',
+              cognome: '',
+              azienda: az.name,
+              presenza: false,
+              tipo: 'Open-Day',
+              presenzaG1: false,
+              presenzaG2: false,
+              tipoG1: 'Pagante',
+              tipoG2: 'Pagante',
+              fatturato: '',
+              corso: '',
+              esercizio: '',
+              programmazione: ''
+            });
+            added++;
+          }
+        }
+      });
+    });
+  });
+  if (added > 0) {
+    save();
+  }
+  return added;
+}
+
+function renderIscritti() {
+  autoPopulateFromPersone();
+  updateEditionLabels();
+  const tbody = document.getElementById('iscritti-tbody');
+  const empty = document.getElementById('iscritti-empty');
+  const edIscritti = state.iscritti.filter(i => i.edition === state.edition);
+
+  tbody.innerHTML = '';
+
+  const counter = document.getElementById('iscritti-counter');
+
+  if (edIscritti.length === 0) {
+    empty.style.display = 'block';
+    if (counter) counter.style.display = 'none';
+    updateStats([]);
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Trova i 5 fatturati più alti
+  const fatturati = edIscritti.map(i => parseFloat(i.fatturato) || 0).sort((a, b) => b - a);
+  const top5 = new Set(fatturati.slice(0, 5).filter(v => v > 0));
+
+  edIscritti.forEach((isc, idx) => {
+    const globalIdx = state.iscritti.indexOf(isc);
+    const fatVal = parseFloat(isc.fatturato) || 0;
+    const isTop5 = top5.has(fatVal) && fatVal > 0;
+    const tr = document.createElement('tr');
+    if (isTop5) tr.className = 'oro-highlight';
+
+    const isG1 = isc.presenzaG1 || false;
+    const isG2 = isc.presenzaG2 || false;
+    const tipoG1 = isc.tipoG1 || 'Pagante';
+    const tipoG2 = isc.tipoG2 || 'Pagante';
+
+    tr.innerHTML = `
+      <td><input class="td-input" type="text" value="${escHtml(isc.partner||'')}" style="min-width:160px;"
+        onchange="updateIscritto(${globalIdx},'partner',this.value)"></td>
+      <td><input class="td-input" type="text" value="${escHtml(isc.consulente||'')}" style="min-width:160px;"
+        onchange="updateIscritto(${globalIdx},'consulente',this.value)"></td>
+      <td><input class="td-input" type="text" value="${escHtml(isc.nome||'')}"
+        onchange="updateIscritto(${globalIdx},'nome',this.value)"></td>
+      <td><input class="td-input" type="text" value="${escHtml(isc.cognome||'')}"
+        onchange="updateIscritto(${globalIdx},'cognome',this.value)"></td>
+      <td><input class="td-input" type="text" value="${escHtml(isc.azienda||'')}" style="min-width:160px;"
+        onchange="updateIscritto(${globalIdx},'azienda',this.value)"></td>
+      <td>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+          <label class="toggle-presenza" id="toggle-g1-${globalIdx}">
+            <input type="checkbox" ${isG1 ? 'checked' : ''} onchange="updatePresenzaG(${globalIdx},'G1',this.checked)">
+            <div class="toggle-slider"></div>
+          </label>
+          <span class="presenza-micro-label ${isG1 ? 'presente' : 'assente'}" id="pres-g1-label-${globalIdx}">${isG1 ? 'Presente' : 'Assente'}</span>
+        </div>
+      </td>
+      <td>
+        <select class="td-select" onchange="updateIscritto(${globalIdx},'tipoG1',this.value)" style="min-width:110px;">
+          ${['Open-Day','Pagante','Ospite','Diplomato'].map(t =>
+            `<option value="${t}" ${tipoG1===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+          <label class="toggle-presenza" id="toggle-g2-${globalIdx}">
+            <input type="checkbox" ${isG2 ? 'checked' : ''} onchange="updatePresenzaG(${globalIdx},'G2',this.checked)">
+            <div class="toggle-slider"></div>
+          </label>
+          <span class="presenza-micro-label ${isG2 ? 'presente' : 'assente'}" id="pres-g2-label-${globalIdx}">${isG2 ? 'Presente' : 'Assente'}</span>
+        </div>
+      </td>
+      <td>
+        <select class="td-select" onchange="updateIscritto(${globalIdx},'tipoG2',this.value)" style="min-width:110px;">
+          ${['Open-Day','Pagante','Ospite','Diplomato'].map(t =>
+            `<option value="${t}" ${tipoG2===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </td>
+      <td class="td-number">
+        <input class="td-input ${isTop5 ? 'oro-value' : ''}" type="number" min="0" max="9999" step="0.1"
+          value="${isc.fatturato||''}" style="min-width:80px;"
+          onchange="updateIscritto(${globalIdx},'fatturato',this.value);renderIscritti()">
+      </td>
+      <td>
+        <select class="td-select" onchange="updateIscritto(${globalIdx},'corso',this.value)" style="min-width:120px;">
+          <option value="">— Seleziona —</option>
+          ${getCorsiOptions(isc.corso)}
+        </select>
+      </td>
+      <td><input class="td-input" type="text" value="${escHtml(isc.esercizio||'')}" style="min-width:80px;"
+        onchange="updateIscritto(${globalIdx},'esercizio',this.value)"></td>
+      <td>
+        <textarea class="td-textarea" rows="2"
+          onchange="updateIscritto(${globalIdx},'programmazione',this.value)">${escHtml(isc.programmazione||'')}</textarea>
+      </td>
+      <td>
+        <button class="btn btn-ghost" style="padding:5px 9px;font-size:0.78rem;color:var(--rosa);border-color:rgba(179,70,141,0.3);"
+          onclick="duplicaIscritto(${globalIdx})" title="Aggiungi altra persona da questa azienda">+1</button>
+        <button class="btn btn-danger" onclick="removeIscritto(${globalIdx})">&#215;</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Aggiorna contatore presenti
+  if (counter) {
+    const nG1 = edIscritti.filter(i => i.presenzaG1).length;
+    const nG2 = edIscritti.filter(i => i.presenzaG2).length;
+    const nTotale = edIscritti.length;
+    counter.style.display = 'block';
+    counter.innerHTML = `Presenti G1: <span style="color:var(--rosa);font-weight:700;">${nG1}</span> &nbsp;|&nbsp; Presenti G2: <span style="color:var(--rosa);font-weight:700;">${nG2}</span> &nbsp;su ${nTotale} iscritti`;
+  }
+
+  updateStats(edIscritti);
+  renderCorsiTags();
+}
+
+function updatePresenzaG(gi, giorno, checked) {
+  const field = giorno === 'G1' ? 'presenzaG1' : 'presenzaG2';
+  state.iscritti[gi][field] = checked;
+  // Mantieni compatibilità legacy campo presenza
+  if (giorno === 'G1') state.iscritti[gi].presenza = checked;
+  save();
+  const labelId = giorno === 'G1' ? 'pres-g1-label-' + gi : 'pres-g2-label-' + gi;
+  const label = document.getElementById(labelId);
+  if (label) {
+    label.textContent = checked ? 'Presente' : 'Assente';
+    label.className = 'presenza-micro-label ' + (checked ? 'presente' : 'assente');
+  }
+}
+
+function updatePresenza(gi, checked) {
+  state.iscritti[gi].presenza = checked;
+  save();
+  // Aggiorna micro-label in tempo reale senza re-render completo
+  const label = document.getElementById('pres-label-' + gi);
+  if (label) {
+    label.textContent = checked ? 'Presente' : 'Assente';
+    label.className = 'presenza-micro-label ' + (checked ? 'presente' : 'assente');
+  }
+}
+
+function updateStats(list) {
+  document.getElementById('stat-total').textContent = list.length;
+  // Contatori G1/G2
+  const nG1 = list.filter(i => i.presenzaG1).length;
+  const nG2 = list.filter(i => i.presenzaG2).length;
+  const nBoth = list.filter(i => i.presenzaG1 && i.presenzaG2).length;
+  const elG1 = document.getElementById('stat-presenti-g1');
+  const elG2 = document.getElementById('stat-presenti-g2');
+  const elBoth = document.getElementById('stat-presenti-both');
+  if (elG1) elG1.textContent = nG1;
+  if (elG2) elG2.textContent = nG2;
+  if (elBoth) elBoth.textContent = nBoth;
+  // Legacy — aggiorna anche stat-presenti se esiste
+  const elP = document.getElementById('stat-presenti');
+  if (elP) elP.textContent = list.filter(i => i.presenza).length;
+  const totFat = list.reduce((acc, i) => acc + (parseFloat(i.fatturato) || 0), 0);
+  document.getElementById('stat-fatturato').textContent = totFat > 0 ? (totFat / list.filter(i => parseFloat(i.fatturato) > 0).length || 0).toFixed(1) + '% media' : '—';
+  document.getElementById('stat-paganti').textContent = list.filter(i => i.tipo === 'Pagante').length;
+}
+
+
+function duplicaIscritto(gi) {
+  const src = state.iscritti[gi];
+  const newId = uid();
+  state.iscritti.push({
+    id: newId,
+    edition: src.edition,
+    partner: src.partner,
+    consulente: src.consulente,
+    nome: '',
+    cognome: '',
+    azienda: src.azienda,
+    presenza: false,
+    tipo: 'Open-Day',
+    presenzaG1: false,
+    presenzaG2: false,
+    tipoG1: 'Pagante',
+    tipoG2: 'Pagante',
+    fatturato: '',
+    corso: src.corso,
+    esercizio: '',
+    programmazione: '',
+    _pendingPersona: true  // flag: quando nome/cognome vengono inseriti, aggiorna persone[]
+  });
+  save();
+  renderIscritti();
+  toast('Aggiunta nuova persona per ' + (src.azienda || 'azienda') + ' — inserisci nome e cognome');
+}
+
+// Chiamata da updateIscritto quando nome o cognome viene aggiornato
+function maybeSavePersonaInAnagrafica(gi) {
+  const isc = state.iscritti[gi];
+  if (!isc || !isc._pendingPersona) return;
+  if (!isc.nome && !isc.cognome) return;
+  // Cerca l'azienda corrispondente
+  state.partners.forEach(partner => {
+    if (partner.name !== isc.partner) return;
+    partner.consulenti.forEach(cons => {
+      if (cons.name !== isc.consulente) return;
+      cons.aziende.forEach(az => {
+        if (az.name !== isc.azienda) return;
+        if (!az.persone) az.persone = [];
+        const nome = (isc.nome || '').trim();
+        const cognome = (isc.cognome || '').trim();
+        const exists = az.persone.some(p =>
+          p.nome.toLowerCase() === nome.toLowerCase() &&
+          p.cognome.toLowerCase() === cognome.toLowerCase()
+        );
+        if (!exists && (nome || cognome)) {
+          az.persone.push({ id: uid(), nome, cognome });
+          delete isc._pendingPersona;
+          save();
+        }
+      });
+    });
+  });
+}
+function addIscritto() {
+  state.iscritti.push({
+    id: uid(),
+    edition: state.edition,
+    partner: '', consulente: '', nome: '', cognome: '', azienda: '',
+    presenza: false, tipo: 'Open-Day',
+    presenzaG1: false, presenzaG2: false, tipoG1: 'Pagante', tipoG2: 'Pagante',
+    fatturato: '', corso: '', esercizio: '', programmazione: ''
+  });
+  save();
+  renderIscritti();
+}
+
+function removeIscritto(gi) {
+  state.iscritti.splice(gi, 1);
+  save();
+  renderIscritti();
+  toast('Iscritto rimosso');
+}
+
+function updateIscritto(gi, field, val) {
+  state.iscritti[gi][field] = val;
+  save();
+  // Se nome o cognome vengono aggiornati su una riga +1 pendente, salva in anagrafica
+  if (field === 'nome' || field === 'cognome') {
+    maybeSavePersonaInAnagrafica(gi);
+  }
+}
+
+function syncFromClienti() {
+  // Usa autoPopulateFromPersone che gestisce sia aziende con persone[] che senza
+  const added = autoPopulateFromPersone();
+  renderIscritti();
+  toast(added > 0 ? `${added} record sincronizzati da Clienti` : 'Nessun nuovo record da sincronizzare');
+}
+
+// ===== CORSI =====
+function renderCorsiTags() {
+  const container = document.getElementById('corsi-tags');
+  if (!container) return;
+  container.innerHTML = '';
+  state.corsi.forEach((c, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'corso-tag';
+    tag.innerHTML = `${escHtml(c)} <span class="corso-tag-remove" onclick="removeCorso(${i})">&#215;</span>`;
+    container.appendChild(tag);
+  });
+}
+
+function addCorso() {
+  const inp = document.getElementById('nuovo-corso-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  if (state.corsi.includes(val)) { toast('Corso già presente'); return; }
+  state.corsi.push(val);
+  inp.value = '';
+  save();
+  renderCorsiTags();
+  toast('Corso aggiunto: ' + val);
+}
+
+function removeCorso(i) {
+  state.corsi.splice(i, 1);
+  save();
+  renderCorsiTags();
+}
+
+// ===== PAGE 3: FIRME =====
+let firmeGiornoAttivo = 1;
+
+function switchFirmeTab(g) {
+  firmeGiornoAttivo = g;
+  document.getElementById('tab-firme-g1').className = g === 1 ? 'btn btn-primary' : 'btn btn-outline';
+  document.getElementById('tab-firme-g2').className = g === 2 ? 'btn btn-primary' : 'btn btn-outline';
+  document.getElementById('firme-tab-g1').style.display = g === 1 ? '' : 'none';
+  document.getElementById('firme-tab-g2').style.display = g === 2 ? '' : 'none';
+}
+
+function renderFirmeGiorno(g) {
+  const field = g === 2 ? 'presenzaG2' : 'presenzaG1';
+  const tbodyId = g === 2 ? 'firme-tbody-g2' : 'firme-tbody-g1';
+  const emptyId = g === 2 ? 'firme-empty-g2' : 'firme-empty-g1';
+  const tbody = document.getElementById(tbodyId);
+  const empty = document.getElementById(emptyId);
+  if (!tbody) return;
+
+  const presenti = state.iscritti
+    .filter(i => i.edition === state.edition && i[field])
+    .sort((a, b) => (a.cognome || '').toLowerCase() < (b.cognome || '').toLowerCase() ? -1 : 1);
+
+  tbody.innerHTML = '';
+
+  if (presenti.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  presenti.forEach((isc, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="num-cell">${idx + 1}</td>
+      <td><strong>${escHtml((isc.nome + ' ' + isc.cognome).trim() || '—')}</strong></td>
+      <td>${escHtml(isc.azienda || '—')}</td>
+      <td>${escHtml(isc.consulente || '—')}</td>
+      <td class="firma-cell"></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderFirme() {
+  updateEditionLabels();
+  // Aggiorna label edizione per G2
+  const lbl2 = document.getElementById('firme-edition-label-g2');
+  if (lbl2) lbl2.textContent = 'Lista Presenze — Edizione: ' + (state.edition || '—');
+  renderFirmeGiorno(1);
+  renderFirmeGiorno(2);
+  // Legacy: popola anche il tbody singolo se presente
+  const tbody = document.getElementById('firme-tbody');
+  const empty = document.getElementById('firme-empty');
+  if (tbody) tbody.innerHTML = '';
+}
+
+function printFirmeG(g) {
+  const cls = g === 2 ? 'print-firme-g2' : 'print-firme-g1';
+  // Assicurati che il tab corretto sia visibile
+  switchFirmeTab(g);
+  document.body.classList.add(cls);
+  window.print();
+  document.body.classList.remove(cls);
+}
+
+// ===== PAGE: REPORT PROGRAMMAZIONE =====
+function renderReport() {
+  const edition = state.edition;
+  const lbl1 = document.getElementById('report-edition-label');
+  const lbl2 = document.getElementById('report-edition-print');
+  if (lbl1) lbl1.textContent = 'Edizione: ' + edition;
+  if (lbl2) lbl2.textContent = 'Edizione: ' + edition;
+
+  const tbody = document.getElementById('report-tbody');
+  const empty = document.getElementById('report-empty');
+  if (!tbody) return;
+
+  // Solo presenti, ordinati per cognome
+  const presenti = state.iscritti
+    .filter(i => i.edition === edition && i.presenza)
+    .sort((a, b) => (a.cognome || '').toLowerCase() < (b.cognome || '').toLowerCase() ? -1 : 1);
+
+  tbody.innerHTML = '';
+
+  if (presenti.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  presenti.forEach((isc, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="report-num-cell">${idx + 1}</td>
+      <td>${escHtml(isc.partner || '—')}</td>
+      <td>${escHtml(isc.consulente || '—')}</td>
+      <td><strong>${escHtml(((isc.nome || '') + ' ' + (isc.cognome || '')).trim() || '—')}</strong></td>
+      <td>${escHtml(isc.azienda || '—')}</td>
+      <td>${escHtml(isc.corso || '—')}</td>
+      <td>${escHtml(isc.esercizio || '—')}</td>
+      <td class="prog-cell">${escHtml(isc.programmazione || '—')}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===== PAGE 4: STORICO =====
+let storicoFilter = 'Tutti';
+let storicoAnni = [];
+let storicoEdizioniEscluse = []; // edizioni escluse dal grafico
+let storicoPresenzaFilter = 'tutti'; // 'tutti' | 'soloG1' | 'soloG2' | 'entrambi'
+
+function setStoricoFilter(filtro, btn) {
+  storicoFilter = filtro;
+  document.querySelectorAll('#storico-filtri .filter-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderStorico();
+}
+
+function setStoricoPresenzaFilter(valore, btn) {
+  storicoPresenzaFilter = valore;
+  document.querySelectorAll('#storico-presenza-filtri .filter-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderStorico();
+}
+
+function renderEdizioniPills() {
+  const container = document.getElementById('storico-edizioni-pills');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Mostra solo le edizioni che hanno almeno 1 presente
+  const edDisponibili = state.edizioni.filter(ed =>
+    state.iscritti.some(i => i.edition === ed && i.presenza)
+  );
+
+  edDisponibili.forEach(ed => {
+    const esclusa = storicoEdizioniEscluse.includes(ed);
+    const pill = document.createElement('button');
+    pill.className = 'filter-pill' + (esclusa ? '' : ' active');
+    pill.textContent = ed;
+    pill.onclick = () => {
+      if (esclusa) {
+        storicoEdizioniEscluse = storicoEdizioniEscluse.filter(e => e !== ed);
+      } else {
+        // Lascia almeno una edizione visibile
+        const visibili = edDisponibili.filter(e => !storicoEdizioniEscluse.includes(e));
+        if (visibili.length <= 1) return;
+        storicoEdizioniEscluse.push(ed);
+      }
+      renderStorico();
+    };
+    container.appendChild(pill);
+  });
+}
+
+function renderAnniPills(anniDisponibili) {
+  const container = document.getElementById('storico-anni-pills');
+  if (!container) return;
+  container.innerHTML = '';
+  anniDisponibili.forEach(anno => {
+    const pill = document.createElement('button');
+    pill.className = 'filter-pill' + (storicoAnni.includes(anno) ? ' active' : '');
+    pill.textContent = anno;
+    pill.onclick = () => {
+      if (storicoAnni.includes(anno)) {
+        if (storicoAnni.length > 1) storicoAnni = storicoAnni.filter(a => a !== anno);
+        else return;
+      } else {
+        storicoAnni.push(anno);
+      }
+      renderStorico();
+    };
+    container.appendChild(pill);
+  });
+}
+
+function renderStorico() {
+  const canvas = document.getElementById('storico-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // Aggrega dati per edizione
+  const edizioniSet = new Set(state.iscritti.map(i => i.edition));
+  const edizioni = Array.from(edizioniSet);
+
+  // Estrai anni disponibili dalle edizioni con presenti
+  const anniDisponibili = [...new Set(
+    state.edizioni
+      .filter(ed => state.iscritti.some(i => i.edition === ed && i.presenza))
+      .map(ed => ed.split(' ')[1])
+  )];
+
+  // Inizializza storicoAnni se vuoto o aggiorna con nuovi anni
+  anniDisponibili.forEach(a => { if (!storicoAnni.includes(a)) storicoAnni.push(a); });
+  storicoAnni = storicoAnni.filter(a => anniDisponibili.includes(a));
+
+  // Aggiorna le pill anni nell'HTML
+  renderAnniPills(anniDisponibili);
+  renderEdizioniPills();
+
+  // Ordine cronologico filtrato per anni selezionati
+  const edizioniOrdinate = state.edizioni.filter(e => {
+    const anno = e.split(' ')[1];
+    return edizioni.includes(e) && storicoAnni.includes(anno)
+      && !storicoEdizioniEscluse.includes(e);
+  });
+
+  // Filtra e conta G1 / G2 / Entrambi per edizione
+  const dati = edizioniOrdinate.map(ed => {
+    let lista = state.iscritti.filter(i => i.edition === ed);
+    if (storicoFilter !== 'Tutti') {
+      lista = lista.filter(i => (i.tipoG1 === storicoFilter || i.tipoG2 === storicoFilter || i.tipo === storicoFilter));
+    }
+    // Applica filtro per tipo presenza
+    let nG1 = 0, nG2 = 0, nBoth = 0;
+    if (storicoPresenzaFilter === 'soloG1') {
+      nG1 = lista.filter(i => i.presenzaG1 && !i.presenzaG2).length;
+    } else if (storicoPresenzaFilter === 'soloG2') {
+      nG2 = lista.filter(i => !i.presenzaG1 && i.presenzaG2).length;
+    } else if (storicoPresenzaFilter === 'entrambi') {
+      nBoth = lista.filter(i => i.presenzaG1 && i.presenzaG2).length;
+    } else {
+      nG1 = lista.filter(i => i.presenzaG1).length;
+      nG2 = lista.filter(i => i.presenzaG2).length;
+      nBoth = lista.filter(i => i.presenzaG1 && i.presenzaG2).length;
+    }
+    return { ed, nG1, nG2, nBoth };
+  }).filter(d => d.nG1 > 0 || d.nG2 > 0 || d.nBoth > 0);
+
+  // Dimensioni canvas
+  const W = canvas.parentElement.clientWidth - 56;
+  const H = 310;
+  canvas.width = W;
+  canvas.height = H;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (dati.length === 0) {
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '14px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Nessun dato disponibile per il filtro selezionato.', W / 2, H / 2);
+
+    // Reset stat boxes
+    document.getElementById('top-cliente-name').textContent = '—';
+    document.getElementById('top-cliente-val').textContent = '—';
+    document.getElementById('crescita-perc').textContent = '—%';
+    return;
+  }
+
+  const maxVal = Math.max(...dati.map(d => Math.max(d.nG1, d.nG2, d.nBoth)), 1);
+  const paddingLeft = 44;
+  const paddingRight = 20;
+  const paddingTop = 30;
+  const paddingBottom = 70;
+  const chartW = W - paddingLeft - paddingRight;
+  const chartH = H - paddingTop - paddingBottom;
+
+  // 3 barre per gruppo + gap
+  const groupW = chartW / dati.length;
+  const barCount = 3;
+  const barGapRatio = 0.18; // gap tra barre nello stesso gruppo
+  const groupPadRatio = 0.25; // padding ai lati del gruppo
+  const singleBarW = (groupW * (1 - groupPadRatio)) / (barCount + (barCount - 1) * barGapRatio);
+  const barStep = singleBarW * (1 + barGapRatio);
+
+  // Colori dataset
+  const colors = ['#b3468d', '#e87fca', '#ffffff'];
+  const strokeColors = ['transparent', 'transparent', '#b3468d'];
+  const labels = ['Presenti G1', 'Presenti G2', 'Presenti Entrambi'];
+
+  // Griglia asse Y
+  const steps = 5;
+  for (let s = 0; s <= steps; s++) {
+    const y = paddingTop + chartH - (s / steps) * chartH;
+    const val = Math.round((s / steps) * maxVal);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, y);
+    ctx.lineTo(W - paddingRight, y);
+    ctx.stroke();
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '11px Segoe UI, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(val, paddingLeft - 6, y + 4);
+  }
+
+  // Barre raggruppate
+  dati.forEach((d, i) => {
+    const groupX = paddingLeft + i * groupW + (groupW * groupPadRatio / 2);
+    const vals = [d.nG1, d.nG2, d.nBoth];
+
+    vals.forEach((val, bi) => {
+      if (val === 0) return;
+      const x = groupX + bi * barStep;
+      const barH = (val / maxVal) * chartH;
+      const y = paddingTop + chartH - barH;
+
+      ctx.fillStyle = colors[bi];
+      if (strokeColors[bi] !== 'transparent') {
+        ctx.strokeStyle = strokeColors[bi];
+        ctx.lineWidth = 1.5;
+      }
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(x, y, singleBarW, barH, [3, 3, 0, 0]) : ctx.rect(x, y, singleBarW, barH);
+      ctx.fill();
+      if (strokeColors[bi] !== 'transparent') ctx.stroke();
+      ctx.lineWidth = 1;
+
+      // Numero sopra barra
+      ctx.fillStyle = '#f0f4f7';
+      ctx.font = 'bold 10px Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(val, x + singleBarW / 2, y - 4);
+    });
+
+    // Etichetta asse X (centrata sul gruppo)
+    const groupCenterX = groupX + (barStep * (barCount - 1) + singleBarW) / 2;
+    ctx.save();
+    ctx.translate(groupCenterX, H - paddingBottom + 14);
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '10px Segoe UI, sans-serif';
+    ctx.textAlign = 'right';
+    const shortLabel = d.ed.replace(' 2025','\'25').replace(' 2026','\'26').replace(' 2027','\'27').replace(' 2028','\'28');
+    ctx.fillText(shortLabel, 0, 0);
+    ctx.restore();
+  });
+
+  // Legenda
+  const legendY = H - 10;
+  const legendItems = [
+    { color: '#b3468d', stroke: null, label: 'G1' },
+    { color: '#e87fca', stroke: null, label: 'G2' },
+    { color: '#ffffff', stroke: '#b3468d', label: 'Entrambi' }
+  ];
+  let legendX = paddingLeft;
+  legendItems.forEach(item => {
+    ctx.fillStyle = item.color;
+    ctx.beginPath();
+    ctx.rect(legendX, legendY - 8, 12, 10);
+    ctx.fill();
+    if (item.stroke) { ctx.strokeStyle = item.stroke; ctx.lineWidth = 1.5; ctx.stroke(); ctx.lineWidth = 1; }
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '10px Segoe UI, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(item.label, legendX + 15, legendY);
+    legendX += 15 + ctx.measureText(item.label).width + 18;
+  });
+
+  // Filtro attivo
+  ctx.fillStyle = 'rgba(179,70,141,0.7)';
+  ctx.font = '11px Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Filtro: ' + storicoFilter, paddingLeft, paddingTop - 10);
+
+  // ===== STATISTICHE =====
+  // Top cliente per fatturato
+  const tuttiIscritti = state.iscritti.filter(i => parseFloat(i.fatturato) > 0);
+  if (tuttiIscritti.length > 0) {
+    tuttiIscritti.sort((a, b) => (parseFloat(b.fatturato) || 0) - (parseFloat(a.fatturato) || 0));
+    const top = tuttiIscritti[0];
+    const nomeCognome = ((top.nome || '') + ' ' + (top.cognome || '')).trim() || '—';
+    document.getElementById('top-cliente-name').textContent = nomeCognome;
+    document.getElementById('top-cliente-val').textContent =
+      (top.azienda ? top.azienda + ' — ' : '') + formatEur(top.fatturato);
+  } else {
+    document.getElementById('top-cliente-name').textContent = '—';
+    document.getElementById('top-cliente-val').textContent = 'Nessun dato fatturato';
+  }
+
+  // % clienti con fatturato > 0
+  // Denominatore: solo chi ha il dato fatturato effettivamente inserito (valore numerico non vuoto)
+  const conDati = state.iscritti.filter(i => {
+    const v = i.fatturato;
+    return v !== '' && v !== null && v !== undefined && !isNaN(parseFloat(v));
+  });
+  const inCrescita = conDati.filter(i => parseFloat(i.fatturato) > 0);
+  if (conDati.length > 0) {
+    const perc = Math.round((inCrescita.length / conDati.length) * 100);
+    document.getElementById('crescita-perc').textContent = perc + '%';
+    document.getElementById('crescita-sub').textContent =
+      inCrescita.length + ' su ' + conDati.length + ' con dato inserito';
+  } else {
+    document.getElementById('crescita-perc').textContent = '—%';
+    document.getElementById('crescita-sub').textContent = 'nessun dato fatturato inserito';
+  }
+  renderStoricoClienti();
+  renderCrescitaInputs();
+  renderGraficoCrescita();
+}
+
+function renderStoricoClienti() {
+  const tbody = document.getElementById('storico-clienti-tbody');
+  const empty = document.getElementById('storico-clienti-empty');
+  if (!tbody) return;
+
+  // Raggruppa iscritti per chiave univoca (nome+cognome+azienda)
+  const clientiMap = {};
+  state.iscritti.forEach(i => {
+    const key = (i.nome + '|' + i.cognome + '|' + i.azienda).toLowerCase();
+    if (!clientiMap[key]) {
+      clientiMap[key] = {
+        nome: i.nome, cognome: i.cognome, azienda: i.azienda,
+        consulente: i.consulente,
+        edizioniIscritto: [],
+        edizioniPresente: [],
+        presenzaDettaglio: {} // { edizione: { g1, g2 } }
+      };
+    }
+    if (!clientiMap[key].edizioniIscritto.includes(i.edition)) {
+      clientiMap[key].edizioniIscritto.push(i.edition);
+    }
+    const g1 = !!(i.presenzaG1);
+    const g2 = !!(i.presenzaG2);
+    if (g1 || g2) {
+      if (!clientiMap[key].edizioniPresente.includes(i.edition)) {
+        clientiMap[key].edizioniPresente.push(i.edition);
+      }
+      clientiMap[key].presenzaDettaglio[i.edition] = { g1, g2 };
+    }
+  });
+
+  const clienti = Object.values(clientiMap);
+
+  // Ordina per numero edizioni presenti (decrescente), poi per cognome
+  clienti.sort((a, b) => {
+    if (b.edizioniPresente.length !== a.edizioniPresente.length)
+      return b.edizioniPresente.length - a.edizioniPresente.length;
+    return (a.cognome || '').localeCompare(b.cognome || '');
+  });
+
+  tbody.innerHTML = '';
+
+  if (clienti.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Ordine cronologico delle edizioni
+  const ordineEd = state.edizioni;
+
+  clienti.forEach(c => {
+    // Ordina le edizioni frequentate in ordine cronologico, filtrate per tipo presenza
+    let edPresenti = ordineEd.filter(e => c.edizioniPresente.includes(e));
+    if (storicoPresenzaFilter !== 'tutti') {
+      edPresenti = edPresenti.filter(e => {
+        const det = c.presenzaDettaglio[e] || {};
+        if (storicoPresenzaFilter === 'soloG1') return det.g1 && !det.g2;
+        if (storicoPresenzaFilter === 'soloG2') return !det.g1 && det.g2;
+        if (storicoPresenzaFilter === 'entrambi') return det.g1 && det.g2;
+        return true;
+      });
+    }
+
+    // Se il filtro non produce edizioni visibili, salta la riga
+    if (edPresenti.length === 0) return;
+
+    // Costruisce badge per edizione
+    const badgesHtml = edPresenti.map(e => {
+      const det = c.presenzaDettaglio[e] || {};
+      let label, color;
+      if (det.g1 && det.g2) { label = 'G1+G2'; color = '#b3468d'; }
+      else if (det.g1) { label = 'G1'; color = '#b3468d'; }
+      else if (det.g2) { label = 'G2'; color = '#e87fca'; }
+      else { label = e; color = '#8fa8b8'; }
+      const shortEd = e.replace(' 2025','\'25').replace(' 2026','\'26').replace(' 2027','\'27').replace(' 2028','\'28');
+      return `<span title="${escHtml(e)}" style="display:inline-flex;align-items:center;gap:3px;background:rgba(179,70,141,0.08);border:1px solid rgba(179,70,141,0.25);border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:600;margin:2px;white-space:nowrap;">
+        <span style="color:${color};">${label}</span>
+        <span style="color:var(--testo-muted);font-weight:400;">${shortEd}</span>
+      </span>`;
+    }).join('');
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${escHtml(((c.nome||'') + ' ' + (c.cognome||'')).trim() || '—')}</strong></td>
+      <td>${escHtml(c.azienda || '—')}</td>
+      <td>${escHtml(c.consulente || '—')}</td>
+      <td style="text-align:center;font-weight:700;color:var(--testo-muted);">${c.edizioniIscritto.length}</td>
+      <td style="text-align:center;font-weight:700;color:var(--rosa);">${c.edizioniPresente.length}</td>
+      <td style="font-size:0.78rem;">${badgesHtml || '<span style="color:var(--testo-muted);">—</span>'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderAll() {
+  updateEditionLabels();
+  renderCorsiTags();
+}
+
+// ===== INIT =====
+
+// ===== GESTIONE EDIZIONI DINAMICHE =====
+function renderEdizioni() {
+  const sel = document.getElementById('edition-select');
+  const current = state.edition;
+  sel.innerHTML = '';
+  state.edizioni.forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e;
+    opt.textContent = e;
+    if (e === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // Se l'edizione corrente non è nella lista, seleziona la prima
+  if (!state.edizioni.includes(current) && state.edizioni.length > 0) {
+    state.edition = state.edizioni[0];
+    sel.value = state.edition;
+  }
+  document.getElementById('navbar-edition').textContent = state.edition;
+  const il = document.getElementById('iscritti-edition-label');
+  if (il) il.textContent = 'Edizione: ' + state.edition;
+  const fl = document.getElementById('firme-edition-label');
+  if (fl) fl.textContent = 'Lista Presenze — Edizione: ' + state.edition;
+}
+
+function addEdizione() {
+  const inp = document.getElementById('new-edition-input');
+  const val = inp.value.trim();
+  if (!val) { toast('Inserisci un nome per l\'edizione'); return; }
+  if (state.edizioni.includes(val)) { toast('Edizione già presente'); return; }
+  state.edizioni.push(val);
+  state.edition = val;
+  save();
+  renderEdizioni();
+  inp.value = '';
+  toast('Edizione aggiunta: ' + val);
+}
+
+function removeEdizioneCorrente() {
+  if (state.edizioni.length <= 1) { toast('Deve rimanere almeno un\'edizione'); return; }
+  if (!confirm('Rimuovere l\'edizione "' + state.edition + '"? I dati degli iscritti di questa edizione rimarranno salvati.')) return;
+  const idx = state.edizioni.indexOf(state.edition);
+  state.edizioni.splice(idx, 1);
+  state.edition = state.edizioni[Math.max(0, idx - 1)];
+  save();
+  renderEdizioni();
+  toast('Edizione rimossa');
+}
+function printFirme() {
+  const style = document.createElement('style');
+  style.id = 'print-orientation';
+  style.textContent = '@page { size: A4 landscape; margin: 10mm; }';
+  document.head.appendChild(style);
+  document.body.classList.add('print-firme');
+  window.print();
+  setTimeout(() => {
+    document.body.classList.remove('print-firme');
+    const s = document.getElementById('print-orientation');
+    if (s) s.remove();
+  }, 500);
+}
+
+function printReport() {
+  const style = document.createElement('style');
+  style.id = 'print-orientation';
+  style.textContent = '@page { size: A4 landscape; margin: 10mm; }';
+  document.head.appendChild(style);
+  document.body.classList.add('print-report');
+  window.print();
+  setTimeout(() => {
+    document.body.classList.remove('print-report');
+    const s = document.getElementById('print-orientation');
+    if (s) s.remove();
+  }, 500);
+}
+
+// ===== DISPOSIZIONI BANCHI =====
+
+const SCHEMI = {
+  '2col-4': { label: '2 colonne × 5 file × 4 banchi (40 totali)', colonne: [4, 4], file: 5 },
+  '3col-3': { label: '3 colonne × 5 file × 3 banchi (45 totali)', colonne: [3, 3, 3], file: 5 },
+  '2col-misto': { label: '2 colonne (3+2 banchi) × 5 file (25 totali)', colonne: [3, 2], file: 5 },
+  '2col-6x2': { label: '2 colonne × 6 file × 2 banchi (24 totali)', colonne: [2, 2], file: 6 }
+};
+
+function dispCurrentEdition() {
+  return state.edition || '';
+}
+
+let dispGiorno = 1; // 1 = G1, 2 = G2
+
+function dispGetPresenti() {
+  const ed = dispCurrentEdition();
+  const field = dispGiorno === 2 ? 'presenzaG2' : 'presenzaG1';
+  return (state.iscritti || []).filter(i => i.edition === ed && i[field]);
+}
+
+function switchDispTab(g) {
+  dispGiorno = g;
+  document.getElementById('tab-disp-g1').className = g === 1 ? 'btn btn-primary' : 'btn btn-outline';
+  document.getElementById('tab-disp-g2').className = g === 2 ? 'btn btn-primary' : 'btn btn-outline';
+  renderDisposizioni();
+}
+
+function renderDisposizioni() {
+  const ed = dispCurrentEdition();
+  document.getElementById('disp-edition-label').textContent = 'Edizione: ' + (ed || '—');
+
+  // Popola dropdown disposizioni
+  const sel = document.getElementById('disp-sel');
+  const curVal = sel.value;
+  sel.innerHTML = '<option value="">— Seleziona —</option>';
+  (state.disposizioni || []).filter(d => d.edition === ed).forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.id;
+    o.textContent = d.name;
+    sel.appendChild(o);
+  });
+  // Ripristina selezione se ancora valida
+  if (curVal && sel.querySelector('option[value="' + curVal + '"]')) {
+    sel.value = curVal;
+  }
+
+  const dispId = sel.value;
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+
+  if (!disp) {
+    document.getElementById('disp-empty').style.display = '';
+    document.getElementById('disp-piantina').style.display = 'none';
+    document.getElementById('disp-supervisori-section').style.display = 'none';
+    document.getElementById('disp-schema-group').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('disp-empty').style.display = 'none';
+  document.getElementById('disp-piantina').style.display = '';
+  document.getElementById('disp-supervisori-section').style.display = '';
+  document.getElementById('disp-schema-group').style.display = '';
+
+  renderSchemaRadios(disp);
+  renderPiantina(disp);
+  renderSupTable(disp);
+}
+
+function renderSchemaRadios(disp) {
+  const wrap = document.getElementById('disp-schema-radios');
+  wrap.innerHTML = '';
+  Object.keys(SCHEMI).forEach(key => {
+    const lbl = document.createElement('label');
+    lbl.className = 'schema-radio-label' + (disp.schema === key ? ' sel' : '');
+    lbl.innerHTML = '<input type="radio" name="disp-schema" value="' + key + '"' + (disp.schema === key ? ' checked' : '') + '>' + SCHEMI[key].label;
+    lbl.querySelector('input').addEventListener('change', function() {
+      if (this.checked) {
+        changeSchema(disp.id, key);
+      }
+    });
+    wrap.appendChild(lbl);
+  });
+}
+
+function changeSchema(dispId, schema) {
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+  if (!disp) return;
+  if (disp.schema === schema) return;
+  disp.schema = schema;
+  disp.banchi = buildBanchi(schema);
+  save();
+  renderDisposizioni();
+  toast('Schema aggiornato');
+}
+
+function buildBanchi(schema) {
+  const s = SCHEMI[schema];
+  const banchi = [];
+  let num = 1;
+  for (let f = 0; f < s.file; f++) {
+    s.colonne.forEach((n, col) => {
+      for (let b = 0; b < n; b++) {
+        banchi.push({ id: uid(), num: num++, row: f, col: col, sub: b, clienteId: '', supervisoreId: '', salaPratica: false });
+      }
+    });
+  }
+  return banchi;
+}
+
+function renderPiantina(disp) {
+  const wrap = document.getElementById('disp-piantina');
+  wrap.innerHTML = '';
+  const s = SCHEMI[disp.schema];
+  const presenti = dispGetPresenti();
+
+  s.colonne.forEach((n, colIdx) => {
+    // Etichetta corridoio tra colonne
+    if (colIdx > 0) {
+      const corr = document.createElement('div');
+      corr.className = 'disp-corridoio-label';
+      corr.textContent = 'Corridoio';
+      wrap.appendChild(corr);
+    }
+
+    const colWrap = document.createElement('div');
+    colWrap.className = 'disp-column';
+
+    const colLabel = document.createElement('div');
+    colLabel.className = 'disp-column-label';
+    colLabel.textContent = 'Colonna ' + (colIdx + 1);
+    colWrap.appendChild(colLabel);
+
+    // Banchi di questa colonna, per fila
+    for (let f = 0; f < s.file; f++) {
+      const bancheRiga = disp.banchi.filter(b => b.row === f && b.col === colIdx);
+      if (bancheRiga.length === 0) continue;
+
+      const rigaWrap = document.createElement('div');
+      rigaWrap.className = 'disp-riga-banchi';
+      rigaWrap.style.cssText = 'display:flex;gap:8px;';
+
+      bancheRiga.forEach(banco => {
+        const el = document.createElement('div');
+        el.className = 'disp-banco' + (banco.clienteId ? ' has-cliente' : '') + (banco.salaPratica ? ' sala-pratica' : '');
+        el.id = 'banco-' + banco.id;
+
+        const numEl = document.createElement('div');
+        numEl.className = 'disp-banco-num';
+        numEl.textContent = '#' + banco.num;
+        el.appendChild(numEl);
+
+        if (!banco.clienteId) {
+          const emptyLbl = document.createElement('div');
+          emptyLbl.className = 'disp-banco-empty-label';
+          emptyLbl.textContent = 'Banco ' + banco.num;
+          el.appendChild(emptyLbl);
+        }
+
+        // Dropdown cliente
+        const clienteSel = document.createElement('select');
+        clienteSel.className = 'disp-cliente-sel';
+        clienteSel.innerHTML = '<option value="">— Vuoto —</option>';
+        presenti.forEach(i => {
+          const o = document.createElement('option');
+          o.value = i.id;
+          o.textContent = (i.nome || '') + ' ' + (i.cognome || '');
+          if (banco.clienteId === i.id) o.selected = true;
+          clienteSel.appendChild(o);
+        });
+        clienteSel.addEventListener('change', function() {
+          banco.clienteId = this.value;
+          save();
+          renderDisposizioni();
+        });
+        el.appendChild(clienteSel);
+
+        // Corso cliente (testo)
+        const corsoEl = document.createElement('div');
+        corsoEl.className = 'disp-banco-corso';
+        if (banco.clienteId) {
+          const isc = presenti.find(i => i.id === banco.clienteId);
+          corsoEl.textContent = (isc && isc.corso) ? isc.corso : '—';
+        }
+        el.appendChild(corsoEl);
+
+        // Versione print: nome
+        const pNome = document.createElement('div');
+        pNome.className = 'disp-banco-print-nome';
+        if (banco.clienteId) {
+          const isc = presenti.find(i => i.id === banco.clienteId);
+          pNome.textContent = isc ? ((isc.nome || '') + ' ' + (isc.cognome || '')).trim() : '';
+        }
+        el.appendChild(pNome);
+
+        // Versione print: corso
+        const pCorso = document.createElement('div');
+        pCorso.className = 'disp-banco-print-corso';
+        if (banco.clienteId) {
+          const isc = presenti.find(i => i.id === banco.clienteId);
+          pCorso.textContent = (isc && isc.corso) ? isc.corso : '—';
+        }
+        el.appendChild(pCorso);
+
+        // Dropdown supervisore
+        const supSel = document.createElement('select');
+        supSel.className = 'disp-sup-sel';
+        supSel.innerHTML = '<option value="">Supervisore —</option>';
+        (disp.supervisori || []).forEach(s => {
+          const o = document.createElement('option');
+          o.value = s.id;
+          o.textContent = s.nome + ' ' + s.cognome;
+          if (banco.supervisoreId === s.id) o.selected = true;
+          supSel.appendChild(o);
+        });
+        supSel.addEventListener('change', function() {
+          banco.supervisoreId = this.value;
+          save();
+        });
+        el.appendChild(supSel);
+
+        // Versione print: supervisore
+        const pSup = document.createElement('div');
+        pSup.className = 'disp-banco-print-sup';
+        if (banco.supervisoreId) {
+          const sup = (disp.supervisori || []).find(s => s.id === banco.supervisoreId);
+          pSup.textContent = sup ? 'Sup: ' + sup.nome + ' ' + sup.cognome : '';
+        }
+        el.appendChild(pSup);
+
+        // Toggle sala pratica
+        const spRow = document.createElement('div');
+        spRow.className = 'disp-sala-pratica-row';
+        const spLabel = document.createElement('label');
+        spLabel.className = 'toggle';
+        const spInput = document.createElement('input');
+        spInput.type = 'checkbox';
+        spInput.checked = !!banco.salaPratica;
+        spInput.addEventListener('change', function() {
+          banco.salaPratica = this.checked;
+          save();
+          const bancEl = document.getElementById('banco-' + banco.id);
+          if (bancEl) {
+            bancEl.classList.toggle('sala-pratica', banco.salaPratica);
+          }
+        });
+        const spSlider = document.createElement('span');
+        spSlider.className = 'toggle-slider';
+        spLabel.appendChild(spInput);
+        spLabel.appendChild(spSlider);
+        const spText = document.createElement('span');
+        spText.textContent = 'Sala pratica';
+        spRow.appendChild(spLabel);
+        spRow.appendChild(spText);
+        el.appendChild(spRow);
+
+        // Versione print: sala pratica
+        const pSala = document.createElement('div');
+        pSala.className = 'disp-banco-print-sala';
+        if (banco.salaPratica) pSala.textContent = 'SALA PRATICA';
+        el.appendChild(pSala);
+
+        rigaWrap.appendChild(el);
+      });
+
+      colWrap.appendChild(rigaWrap);
+    }
+
+    wrap.appendChild(colWrap);
+  });
+}
+
+function renderSupTable(disp) {
+  const tbody = document.getElementById('disp-sup-tbody');
+  tbody.innerHTML = '';
+  (disp.supervisori || []).forEach(sup => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input class="disp-sup-nome-input" value="' + escHtml(sup.nome) + '" onchange="updateSup(\'' + disp.id + '\',\'' + sup.id + '\',\'nome\',this.value)"></td>' +
+      '<td><input class="disp-sup-nome-input" value="' + escHtml(sup.cognome) + '" onchange="updateSup(\'' + disp.id + '\',\'' + sup.id + '\',\'cognome\',this.value)"></td>' +
+      '<td><button class="btn btn-danger" onclick="removeSup(\'' + disp.id + '\',\'' + sup.id + '\')">✕</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function updateSup(dispId, supId, field, val) {
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+  if (!disp) return;
+  const sup = (disp.supervisori || []).find(s => s.id === supId);
+  if (sup) sup[field] = val;
+  save();
+  renderPiantina(disp); // aggiorna i dropdown supervisore nei banchi
+}
+
+function removeSup(dispId, supId) {
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+  if (!disp) return;
+  disp.supervisori = (disp.supervisori || []).filter(s => s.id !== supId);
+  // Rimuovi riferimento dai banchi
+  (disp.banchi || []).forEach(b => { if (b.supervisoreId === supId) b.supervisoreId = ''; });
+  save();
+  renderDisposizioni();
+}
+
+function addSupervisore() {
+  const dispId = document.getElementById('disp-sel').value;
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+  if (!disp) { toast('Seleziona prima una disposizione'); return; }
+  const nome = document.getElementById('disp-sup-nome-in').value.trim();
+  const cognome = document.getElementById('disp-sup-cognome-in').value.trim();
+  if (!nome && !cognome) { toast('Inserisci almeno nome o cognome'); return; }
+  disp.supervisori.push({ id: uid(), nome: nome, cognome: cognome });
+  document.getElementById('disp-sup-nome-in').value = '';
+  document.getElementById('disp-sup-cognome-in').value = '';
+  save();
+  renderDisposizioni();
+  toast('Supervisore aggiunto');
+}
+
+function addDisposizione() {
+  const nameEl = document.getElementById('disp-new-name');
+  const name = nameEl.value.trim();
+  if (!name) { toast('Inserisci un nome per la disposizione'); return; }
+  const ed = dispCurrentEdition();
+  const newDisp = {
+    id: uid(),
+    name: name,
+    edition: ed,
+    schema: '2col-4',
+    banchi: buildBanchi('2col-4'),
+    supervisori: []
+  };
+  if (!state.disposizioni) state.disposizioni = [];
+  state.disposizioni.push(newDisp);
+  nameEl.value = '';
+  save();
+  renderDisposizioni();
+  // Seleziona la nuova disposizione
+  const sel = document.getElementById('disp-sel');
+  sel.value = newDisp.id;
+  selectDisposizione(newDisp.id);
+  toast('Disposizione "' + name + '" creata');
+}
+
+function removeDisposizione() {
+  const sel = document.getElementById('disp-sel');
+  const dispId = sel.value;
+  if (!dispId) { toast('Nessuna disposizione selezionata'); return; }
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+  if (!disp) return;
+  if (!confirm('Eliminare la disposizione "' + disp.name + '"?')) return;
+  state.disposizioni = state.disposizioni.filter(d => d.id !== dispId);
+  save();
+  renderDisposizioni();
+  toast('Disposizione eliminata');
+}
+
+function selectDisposizione(id) {
+  const sel = document.getElementById('disp-sel');
+  if (sel.value !== id) sel.value = id;
+  renderDisposizioni();
+}
+
+function printDisposizione() {
+  const style = document.createElement('style');
+  style.id = 'print-orientation';
+  style.textContent = '@page { size: A4 landscape; margin: 8mm; }';
+  document.head.appendChild(style);
+  document.body.classList.add('print-disposizione');
+  window.print();
+  setTimeout(() => {
+    document.body.classList.remove('print-disposizione');
+    const s = document.getElementById('print-orientation');
+    if (s) s.remove();
+  }, 500);
+}
+
+// ===== FOGLIETTINI =====
+
+function renderFogliettini() {
+  const ed = dispCurrentEdition();
+  document.getElementById('fogl-edition-label').textContent = 'Edizione: ' + (ed || '—');
+
+  const presenti = dispGetPresenti();
+  const grid = document.getElementById('fogliettini-grid');
+  const emptyEl = document.getElementById('fogl-empty');
+  grid.innerHTML = '';
+
+  if (presenti.length === 0) {
+    emptyEl.style.display = '';
+    grid.style.display = 'none';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  grid.style.display = '';
+
+  // Ordina per cognome
+  const sorted = presenti.slice().sort((a, b) => {
+    const ca = (a.cognome || '').toLowerCase();
+    const cb = (b.cognome || '').toLowerCase();
+    return ca < cb ? -1 : ca > cb ? 1 : 0;
+  });
+
+  sorted.forEach(isc => {
+    const nome = ((isc.nome || '') + ' ' + (isc.cognome || '')).trim().toUpperCase();
+    const prog = (isc.programmazione || '').trim();
+
+    const card = document.createElement('div');
+    card.className = 'fogliettino-card';
+
+    const nomeEl = document.createElement('div');
+    nomeEl.className = 'fogliettino-nome';
+    nomeEl.textContent = nome;
+    card.appendChild(nomeEl);
+
+    const progEl = document.createElement('div');
+    progEl.className = 'fogliettino-prog' + (prog ? '' : ' empty');
+    progEl.textContent = prog || 'Nessuna programmazione inserita';
+    card.appendChild(progEl);
+
+    grid.appendChild(card);
+  });
+}
+
+function printFogliettini() {
+  document.body.classList.add('print-fogliettini');
+  window.print();
+  setTimeout(() => document.body.classList.remove('print-fogliettini'), 500);
+}
+
+// ===== INIT =====
+
+// ===== DEBRIEFING =====
+function syncDebriefing() {
+  let changed = false;
+  state.iscritti.forEach(isc => {
+    const nome = (isc.nome || '').trim();
+    const cognome = (isc.cognome || '').trim();
+    const azienda = (isc.azienda || '').trim();
+    if (!nome && !cognome) return;
+    const key = (nome + '|' + cognome + '|' + azienda).toLowerCase();
+    const exists = state.debriefing.some(d =>
+      ((d.nome || '').trim() + '|' + (d.cognome || '').trim() + '|' + (d.azienda || '').trim()).toLowerCase() === key
+    );
+    if (!exists) {
+      state.debriefing.push({
+        id: uid(),
+        nome: nome,
+        cognome: cognome,
+        azienda: azienda,
+        notePerEdizione: {},
+        corsiTracciati: []
+      });
+      changed = true;
+    }
+  });
+  if (changed) save();
+}
+
+let _debriefingEdizione = null;
+
+function renderDebriefing() {
+  const edizioneSelezionata = _debriefingEdizione || state.edition;
+  _debriefingEdizione = edizioneSelezionata;
+  const edizionePrecedente = getPrevEdizione(edizioneSelezionata);
+
+  // Studenti presenti nell'edizione selezionata
+  const presentiSet = new Set();
+  state.iscritti.forEach(isc => {
+    if (isc.edizione === edizioneSelezionata && isc.presenza) {
+      const key = ((isc.nome || '').trim() + '|' + (isc.cognome || '').trim() + '|' + (isc.azienda || '').trim()).toLowerCase();
+      presentiSet.add(key);
+    }
+  });
+
+  // Ordina per cognome
+  const sorted = [...state.debriefing].sort((a, b) => {
+    const ca = (a.cognome || '').toLowerCase();
+    const cb = (b.cognome || '').toLowerCase();
+    return ca < cb ? -1 : ca > cb ? 1 : 0;
+  });
+
+  // Costruisce opzioni selettore edizione
+  const opzioniEdizioni = state.edizioni.map(ed =>
+    `<option value="${ed}"${ed === edizioneSelezionata ? ' selected' : ''}>${ed}</option>`
+  ).join('');
+
+  // Costruisce righe tabella
+  let rows = '';
+  if (sorted.length === 0) {
+    rows = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--testo-muted);font-style:italic;">Nessuno studente. Aggiungi iscritti per popolare il debriefing.</td></tr>`;
+  } else {
+    sorted.forEach((d, idx) => {
+      const key = ((d.nome || '').trim() + '|' + (d.cognome || '').trim() + '|' + (d.azienda || '').trim()).toLowerCase();
+      const presente = presentiSet.has(key);
+      const rowStyle = presente
+        ? 'border-left:3px solid var(--success);'
+        : 'border-left:3px solid transparent;';
+
+      // Risale le edizioni precedenti finché trova l'ultimo debriefing non vuoto
+      let notePrev = '—';
+      const _idxEd = state.edizioni.indexOf(edizioneSelezionata);
+      for (let _i = _idxEd - 1; _i >= 0; _i--) {
+        const _ed = state.edizioni[_i];
+        if (d.notePerEdizione && d.notePerEdizione[_ed]) {
+          notePrev = escHtml(d.notePerEdizione[_ed]);
+          break;
+        }
+      }
+
+      const noteCurrent = (d.notePerEdizione && d.notePerEdizione[edizioneSelezionata]) || '';
+
+      const nCorsi = (d.corsiTracciati || []).length;
+
+      rows += `<tr style="${rowStyle}" id="dbrow-${idx}">
+        <td style="font-weight:600;">${escHtml(d.cognome || '')}</td>
+        <td>${escHtml(d.nome || '')}</td>
+        <td style="font-size:0.78rem;color:var(--testo-muted);">${escHtml(d.azienda || '')}</td>
+        <td style="color:var(--testo-muted);font-style:italic;font-size:0.8rem;max-width:200px;white-space:pre-wrap;">${notePrev}</td>
+        <td>
+          <textarea class="td-textarea db-note-ta" rows="2"
+            data-debriefing-id="${d.id}"
+            data-edizione="${edizioneSelezionata}"
+            oninput="saveDebriefingNote(this)"
+            placeholder="Note edizione..."
+          >${escHtml(noteCurrent)}</textarea>
+        </td>
+        <td>
+          <button class="btn btn-ghost" style="font-size:0.75rem;white-space:nowrap;" onclick="toggleCorsiPanel('dbcorsi-${idx}')">Corsi (${nCorsi})</button>
+          <div id="dbcorsi-${idx}" style="display:none;margin-top:8px;">
+            ${renderCorsiPanel(d, idx, edizioneSelezionata)}
+          </div>
+        </td>
+        <td style="text-align:center;">
+          <button class="btn btn-danger" style="padding:4px 8px;font-size:0.8rem;" title="Elimina dal Debriefing" onclick="removeDebriefing('${d.id}')">&#128465;</button>
+        </td>
+      </tr>`;
+    });
+  }
+
+  const html = `
+<div class="section-wrap">
+  <div class="section-header">
+    <div>
+      <div class="section-title">&#128203; <span>Debriefing</span></div>
+      <div class="section-subtitle">Registro progressivo degli studenti per edizione</div>
+    </div>
+  </div>
+
+  <div class="db-filter-bar" style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;backdrop-filter:blur(6px);">
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <label style="font-size:0.7rem;color:var(--testo-muted);letter-spacing:0.08em;text-transform:uppercase;">Edizione</label>
+      <select class="td-select" style="min-width:180px;" onchange="changeDebriefingEdizione(this.value)">
+        ${opzioniEdizioni}
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:var(--testo-muted);margin-top:14px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--success);flex-shrink:0;"></span>
+      Presente in questa edizione
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:var(--testo-muted);margin-top:14px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);flex-shrink:0;"></span>
+      Assente / altra edizione
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table style="min-width:900px;">
+        <thead>
+          <tr>
+            <th>Cognome</th>
+            <th>Nome</th>
+            <th>Azienda</th>
+            <th>Note edizione precedente${edizionePrecedente ? ' <span style="font-weight:400;opacity:0.7;font-size:0.68rem;">(' + escHtml(edizionePrecedente) + ')</span>' : ''}</th>
+            <th>Note edizione selezionata</th>
+            <th>Corsi</th>
+            <th style="width:48px;"></th>
+          </tr>
+        </thead>
+        <tbody id="debriefing-tbody">
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>`;
+
+  document.getElementById('page-debriefing').innerHTML = html;
+}
+
+function renderCorsiPanel(d, idx, edizioneSelezionata) {
+  const corsi = d.corsiTracciati || [];
+  const opzioniEd = state.edizioni.map(ed =>
+    `<option value="${ed}"${ed === edizioneSelezionata ? ' selected' : ''}>${ed}</option>`
+  ).join('');
+
+  let listitems = '';
+  corsi.forEach((c, ci) => {
+    listitems += `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;">
+        <input type="checkbox" ${c.completato ? 'checked' : ''}
+          onchange="toggleCorsoCompletato('${d.id}',${ci},this.checked)"
+          style="accent-color:var(--rosa);width:14px;height:14px;">
+        <span style="font-size:0.8rem;${c.completato ? 'text-decoration:line-through;color:var(--testo-muted);' : ''}">${escHtml(c.nomeCorso || '')}</span>
+      </label>
+      <span style="font-size:0.72rem;color:var(--testo-muted);white-space:nowrap;">${escHtml(c.edizione || '')}</span>
+      <button class="btn btn-danger" style="padding:3px 8px;font-size:0.72rem;" onclick="removeCorsoTracciato('${d.id}',${ci})">✕</button>
+    </div>`;
+  });
+  if (!listitems) listitems = `<div style="font-size:0.78rem;color:var(--testo-muted);padding:6px 0;font-style:italic;">Nessun corso tracciato.</div>`;
+
+  return `<div style="background:rgba(26,13,22,0.6);border:1px solid var(--card-border);border-radius:8px;padding:12px 14px;">
+    ${listitems}
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;">
+      <input type="text" placeholder="Nome corso..." id="new-corso-nome-${d.id}"
+        style="background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:5px 10px;border-radius:6px;font-size:0.78rem;outline:none;width:160px;"
+        onkeydown="if(event.key==='Enter')addCorsoTracciato('${d.id}')">
+      <select id="new-corso-ed-${d.id}"
+        style="background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:5px 10px;border-radius:6px;font-size:0.78rem;outline:none;min-width:140px;">
+        ${opzioniEd}
+      </select>
+      <button class="btn btn-outline" style="font-size:0.75rem;padding:5px 12px;" onclick="addCorsoTracciato('${d.id}')">+ Aggiungi</button>
+    </div>
+  </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function changeDebriefingEdizione(val) {
+  _debriefingEdizione = val;
+  renderDebriefing();
+}
+
+function saveDebriefingNote(ta) {
+  const id = ta.dataset.debriefingId;
+  const edizione = ta.dataset.edizione;
+  const d = state.debriefing.find(x => x.id === id);
+  if (!d) return;
+  if (!d.notePerEdizione) d.notePerEdizione = {};
+  d.notePerEdizione[edizione] = ta.value;
+  save();
+}
+
+function removeDebriefing(id) {
+  const d = state.debriefing.find(x => x.id === id);
+  if (!d) return;
+  const nomeCognome = (((d.nome || '') + ' ' + (d.cognome || '')).trim()) || 'questa persona';
+  if (!confirm('Eliminare ' + nomeCognome + ' dal Debriefing?')) return;
+  state.debriefing = state.debriefing.filter(x => x.id !== id);
+  save();
+  renderDebriefing();
+  toast('Rimosso dal Debriefing');
+}
+
+function toggleCorsiPanel(panelId) {
+  const el = document.getElementById(panelId);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function addCorsoTracciato(debriefingId) {
+  const nomeInput = document.getElementById('new-corso-nome-' + debriefingId);
+  const edInput = document.getElementById('new-corso-ed-' + debriefingId);
+  if (!nomeInput || !edInput) return;
+  const nome = nomeInput.value.trim();
+  if (!nome) return;
+  const d = state.debriefing.find(x => x.id === debriefingId);
+  if (!d) return;
+  if (!d.corsiTracciati) d.corsiTracciati = [];
+  d.corsiTracciati.push({
+    id: uid(),
+    nomeCorso: nome,
+    completato: false,
+    edizione: edInput.value
+  });
+  save();
+  nomeInput.value = '';
+  renderDebriefing();
+}
+
+function removeCorsoTracciato(debriefingId, corsoIdx) {
+  const d = state.debriefing.find(x => x.id === debriefingId);
+  if (!d || !d.corsiTracciati) return;
+  d.corsiTracciati.splice(corsoIdx, 1);
+  save();
+  renderDebriefing();
+}
+
+function toggleCorsoCompletato(debriefingId, corsoIdx, val) {
+  const d = state.debriefing.find(x => x.id === debriefingId);
+  if (!d || !d.corsiTracciati || !d.corsiTracciati[corsoIdx]) return;
+  d.corsiTracciati[corsoIdx].completato = val;
+  save();
+  renderDebriefing();
+}
+
+function showErrorOverlay(msg) {
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) {
+    overlay.innerHTML = `<div style="text-align:center;max-width:420px;padding:0 24px;">
+      <div style="font-size:2rem;margin-bottom:16px;">⚠️</div>
+      <div style="font-size:1.1rem;font-weight:600;margin-bottom:10px;color:#e05555;">Errore di connessione</div>
+      <div style="font-size:0.9rem;color:#8fa8b8;line-height:1.6;">${msg}</div>
+      <button onclick="location.reload()" style="margin-top:24px;background:#b3468d;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:0.9rem;cursor:pointer;font-weight:600;">Ricarica</button>
+    </div>`;
+  }
+}
+
+async function init() {
+  await load();
+  syncDebriefing();
+  renderEdizioni();
+  renderPartners();
+  renderCorsiTags();
+
+  // Imposta nav-home come active
+  document.getElementById('nav-home').classList.add('active');
+
+  // Nascondi overlay di caricamento
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+init();
+
+// ===== INVENTARIO =====
+
+function renderInventario() {
+  const tbody = document.getElementById('inv-tbody');
+  const empty = document.getElementById('inv-empty');
+  const tableEl = document.getElementById('inv-table');
+  if (!tbody) return;
+
+  const inv = state.inventario || [];
+
+  if (inv.length === 0) {
+    tbody.innerHTML = '';
+    if (tableEl) tableEl.style.display = 'none';
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (tableEl) tableEl.style.display = '';
+  if (empty) empty.style.display = 'none';
+
+  tbody.innerHTML = '';
+  inv.forEach((prod, idx) => {
+    const min = Number(prod.giacenzaMin) || 0;
+    const att = Number(prod.giacenzaAttuale) || 0;
+
+    let badgeClass, badgeText;
+    if (att <= min) {
+      badgeClass = 'inv-badge-danger';
+      badgeText = 'SCORTA BASSA';
+    } else if (att <= min * 1.2) {
+      badgeClass = 'inv-badge-warn';
+      badgeText = 'ATTENZIONE';
+    } else {
+      badgeClass = 'inv-badge-ok';
+      badgeText = 'OK';
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input class="inv-input" type="text" value="${escHtml(prod.descrizione || '')}" placeholder="Descrizione prodotto..."
+        onchange="saveInvCella('${prod.id}', 'descrizione', this.value)"></td>
+      <td style="text-align:center;"><input class="inv-input-num" type="number" min="0" value="${min}"
+        onchange="saveInvCella('${prod.id}', 'giacenzaMin', this.value)"></td>
+      <td style="text-align:center;"><input class="inv-input-num" type="number" min="0" value="${att}"
+        onchange="saveInvCella('${prod.id}', 'giacenzaAttuale', this.value)"></td>
+      <td style="text-align:center;"><span class="inv-badge ${badgeClass}">${badgeText}</span></td>
+      <td style="text-align:center;" class="no-print">
+        <button class="btn btn-danger" style="padding:4px 9px;font-size:0.75rem;" onclick="removeProdotto('${prod.id}')">&#10005;</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function addProdotto() {
+  if (!state.inventario) state.inventario = [];
+  state.inventario.push({
+    id: uid(),
+    descrizione: '',
+    giacenzaMin: 0,
+    giacenzaAttuale: 0
+  });
+  save();
+  renderInventario();
+  toast('Prodotto aggiunto');
+}
+
+function removeProdotto(id) {
+  if (!state.inventario) return;
+  state.inventario = state.inventario.filter(p => p.id !== id);
+  save();
+  renderInventario();
+  toast('Prodotto eliminato');
+}
+
+function saveInvCella(id, campo, valore) {
+  const prod = (state.inventario || []).find(p => p.id === id);
+  if (!prod) return;
+  if (campo === 'giacenzaMin' || campo === 'giacenzaAttuale') {
+    prod[campo] = Number(valore) || 0;
+  } else {
+    prod[campo] = valore;
+  }
+  save();
+  // Aggiorna solo il badge della riga corrente senza re-render completo
+  const min = Number(prod.giacenzaMin) || 0;
+  const att = Number(prod.giacenzaAttuale) || 0;
+  let badgeClass, badgeText;
+  if (att <= min) {
+    badgeClass = 'inv-badge-danger'; badgeText = 'SCORTA BASSA';
+  } else if (att <= min * 1.2) {
+    badgeClass = 'inv-badge-warn'; badgeText = 'ATTENZIONE';
+  } else {
+    badgeClass = 'inv-badge-ok'; badgeText = 'OK';
+  }
+  // Trova il badge nella riga del prodotto modificato e aggiornalo
+  const tbody = document.getElementById('inv-tbody');
+  if (!tbody) return;
+  const rows = tbody.querySelectorAll('tr');
+  const inv = state.inventario || [];
+  const prodIdx = inv.findIndex(p => p.id === id);
+  if (prodIdx >= 0 && rows[prodIdx]) {
+    const badge = rows[prodIdx].querySelector('.inv-badge');
+    if (badge) {
+      badge.className = 'inv-badge ' + badgeClass;
+      badge.textContent = badgeText;
+    }
+  }
+}
+
+function printInventario() {
+  const style = document.createElement('style');
+  style.id = 'print-orientation';
+  style.textContent = '@page { size: A4 landscape; margin: 8mm; }';
+  document.head.appendChild(style);
+  document.body.classList.add('print-inventario');
+  window.print();
+  setTimeout(() => {
+    document.body.classList.remove('print-inventario');
+    const s = document.getElementById('print-orientation');
+    if (s) s.remove();
+  }, 500);
+}
+
+// ===== FUNZIONALITA' 1: TRASFERIMENTO CLIENTE =====
+
+let _trasf = { pi: null, ci: null, ai: null };
+
+function apriModaleTrasferimento(pi, ci, ai) {
+  _trasf = { pi, ci, ai };
+  const az = state.partners[pi].consulenti[ci].aziende[ai];
+  const partnerSrc = state.partners[pi];
+
+  // Aggiorna label
+  const lbl = document.getElementById('modal-trasf-azienda-label');
+  if (lbl) lbl.textContent = 'Azienda: ' + escHtml(az.name) + ' — da ' + escHtml(partnerSrc.name) + ' / ' + escHtml(partnerSrc.consulenti[ci].name);
+
+  // Popola dropdown partner
+  const selPartner = document.getElementById('modal-trasf-partner');
+  selPartner.innerHTML = '';
+  state.partners.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = p.name;
+    if (i === pi) opt.selected = true;
+    selPartner.appendChild(opt);
+  });
+
+  // Popola dropdown consulente in base al partner selezionato
+  popolaConsulentiTrasferimento(pi, ci);
+
+  document.getElementById('modal-trasferimento').style.display = 'flex';
+}
+
+function popolaConsulentiTrasferimento(piDest, ciEscludi) {
+  const selPartner = document.getElementById('modal-trasf-partner');
+  const piDestAttuale = parseInt(selPartner.value);
+  const selCons = document.getElementById('modal-trasf-consulente');
+  selCons.innerHTML = '';
+
+  const partner = state.partners[piDestAttuale];
+  if (!partner) return;
+
+  partner.consulenti.forEach((c, i) => {
+    // Se stesso partner di origine, escludi il consulente attuale
+    if (piDestAttuale === _trasf.pi && i === ciEscludi) return;
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = c.name;
+    selCons.appendChild(opt);
+  });
+
+  // Se nessun consulente disponibile, aggiungi placeholder
+  if (selCons.options.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = '— Nessun consulente disponibile —';
+    selCons.appendChild(opt);
+  }
+}
+
+function onTrasferimentoPartnerChange() {
+  // Quando cambia il partner, ricaricare i consulenti senza esclusione
+  // (diverso partner => tutti i consulenti sono validi)
+  const selPartner = document.getElementById('modal-trasf-partner');
+  const piDest = parseInt(selPartner.value);
+  // Escludi il consulente di origine solo se stesso partner
+  const ciEscludi = piDest === _trasf.pi ? _trasf.ci : -1;
+  popolaConsulentiTrasferimento(piDest, ciEscludi);
+}
+
+function eseguiTrasferimento() {
+  const selPartner = document.getElementById('modal-trasf-partner');
+  const selCons = document.getElementById('modal-trasf-consulente');
+  const piDest = parseInt(selPartner.value);
+  const ciDest = parseInt(selCons.value);
+
+  if (isNaN(piDest) || isNaN(ciDest)) {
+    toast('Seleziona un consulente di destinazione');
+    return;
+  }
+
+  const { pi, ci, ai } = _trasf;
+
+  // Stesso consulente stesso partner
+  if (piDest === pi && ciDest === ci) {
+    toast('Il cliente è già assegnato a questo consulente');
+    return;
+  }
+
+  // Recupera l'azienda da spostare
+  const az = state.partners[pi].consulenti[ci].aziende[ai];
+
+  // Aggiorna i record iscritti che la riferiscono
+  const partnerDestName = state.partners[piDest].name;
+  const consDestName = state.partners[piDest].consulenti[ciDest].name;
+  const partnerSrcName = state.partners[pi].name;
+  const consSrcName = state.partners[pi].consulenti[ci].name;
+
+  state.iscritti.forEach(isc => {
+    if (isc.azienda === az.name && isc.partner === partnerSrcName && isc.consulente === consSrcName) {
+      isc.partner = partnerDestName;
+      isc.consulente = consDestName;
+    }
+  });
+
+  // Sposta l'azienda: rimuovi da origine e aggiungi a destinazione
+  state.partners[pi].consulenti[ci].aziende.splice(ai, 1);
+  if (!state.partners[piDest].consulenti[ciDest].aziende) {
+    state.partners[piDest].consulenti[ciDest].aziende = [];
+  }
+  state.partners[piDest].consulenti[ciDest].aziende.push(az);
+
+  chiudiModaleTrasferimento();
+  save();
+  renderPartners();
+  toast('Azienda trasferita a ' + consDestName + ' (' + partnerDestName + ')');
+}
+
+function chiudiModaleTrasferimento(ev) {
+  // Se chiamata da click su overlay, ev esiste; se dal pulsante Annulla, ev è undefined
+  if (ev && ev.target !== document.getElementById('modal-trasferimento')) return;
+  document.getElementById('modal-trasferimento').style.display = 'none';
+  _trasf = { pi: null, ci: null, ai: null };
+}
+
+// ===== FUNZIONALITA' 2: % CLIENTI CON FATTURATO IN CRESCITA PER EDIZIONE =====
+// Struttura dati: state.crescitaPerEdizione = { 'Maggio 2026': 72, 'Giugno 2026': 85, ... }
+
+function getCrescitaPerEdizione() {
+  if (!state.crescitaPerEdizione) state.crescitaPerEdizione = {};
+  return state.crescitaPerEdizione;
+}
+
+function saveCrescitaEdizione(edizione, valore) {
+  if (!state.crescitaPerEdizione) state.crescitaPerEdizione = {};
+  const n = parseInt(valore);
+  if (isNaN(n)) {
+    delete state.crescitaPerEdizione[edizione];
+  } else {
+    state.crescitaPerEdizione[edizione] = Math.max(0, Math.min(100, n));
+  }
+  save();
+  renderGraficoCrescita();
+}
+
+function renderCrescitaInputs() {
+  const container = document.getElementById('crescita-inputs-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const crescita = getCrescitaPerEdizione();
+
+  // Mostra solo le edizioni che hanno almeno 1 iscritto presente (per non mostrare tutte le 30+)
+  const edizioniConDati = state.edizioni.filter(ed =>
+    state.iscritti.some(i => i.edition === ed && (i.presenzaG1 || i.presenzaG2))
+  );
+
+  if (edizioniConDati.length === 0) {
+    container.innerHTML = '<div style="font-size:0.8rem;color:var(--testo-muted);font-style:italic;">Nessuna edizione con presenti disponibile.</div>';
+    return;
+  }
+
+  edizioniConDati.forEach(ed => {
+    const shortLabel = ed.replace(' 2025','\'25').replace(' 2026','\'26').replace(' 2027','\'27').replace(' 2028','\'28');
+    const item = document.createElement('div');
+    item.className = 'crescita-input-item';
+    item.innerHTML = `
+      <label title="${escHtml(ed)}">${escHtml(shortLabel)}</label>
+      <input type="number" min="0" max="100" step="1"
+        value="${crescita[ed] !== undefined ? crescita[ed] : ''}"
+        placeholder="—"
+        onchange="saveCrescitaEdizione('${escHtml(ed)}', this.value)"
+        title="% clienti con fatturato in crescita — ${escHtml(ed)}">`;
+    container.appendChild(item);
+  });
+}
+
+function renderGraficoCrescita() {
+  const canvas = document.getElementById('crescita-edizioni-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const crescita = getCrescitaPerEdizione();
+
+  // Edizioni con valore inserito, in ordine cronologico
+  const edizioniConValore = state.edizioni.filter(ed => crescita[ed] !== undefined);
+
+  const W = canvas.parentElement.clientWidth - 56;
+  const H = 220;
+  canvas.width = W;
+  canvas.height = H;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (edizioniConValore.length === 0) {
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '13px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Inserisci i valori per le edizioni per visualizzare il grafico.', W / 2, H / 2);
+    return;
+  }
+
+  const dati = edizioniConValore.map(ed => ({ ed, val: crescita[ed] }));
+
+  const paddingLeft = 44;
+  const paddingRight = 20;
+  const paddingTop = 24;
+  const paddingBottom = 60;
+  const chartW = W - paddingLeft - paddingRight;
+  const chartH = H - paddingTop - paddingBottom;
+
+  const maxVal = 100;
+  const barW = Math.min(48, (chartW / dati.length) * 0.55);
+  const step = chartW / dati.length;
+
+  // Griglia asse Y (0, 25, 50, 75, 100)
+  [0, 25, 50, 75, 100].forEach(v => {
+    const y = paddingTop + chartH - (v / 100) * chartH;
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, y);
+    ctx.lineTo(W - paddingRight, y);
+    ctx.stroke();
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '10px Segoe UI, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(v + '%', paddingLeft - 5, y + 4);
+  });
+
+  // Barre
+  dati.forEach((d, i) => {
+    const barH = (d.val / 100) * chartH;
+    const cx = paddingLeft + i * step + step / 2;
+    const x = cx - barW / 2;
+    const y = paddingTop + chartH - barH;
+
+    // Gradiente per la barra
+    const grad = ctx.createLinearGradient(0, y, 0, y + barH);
+    grad.addColorStop(0, 'rgba(179,70,141,0.9)');
+    grad.addColorStop(1, 'rgba(179,70,141,0.35)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, barW, barH, [3, 3, 0, 0]);
+    else ctx.rect(x, y, barW, barH);
+    ctx.fill();
+
+    // Valore sopra barra
+    ctx.fillStyle = '#f0f4f7';
+    ctx.font = 'bold 10px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(d.val + '%', cx, y - 5);
+
+    // Etichetta asse X
+    ctx.save();
+    ctx.translate(cx, H - paddingBottom + 12);
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '10px Segoe UI, sans-serif';
+    ctx.textAlign = 'right';
+    const shortLabel = d.ed.replace(' 2025','\'25').replace(' 2026','\'26').replace(' 2027','\'27').replace(' 2028','\'28');
+    ctx.fillText(shortLabel, 0, 0);
+    ctx.restore();
+  });
+
+  // Linea di tendenza tratteggiata (solo se almeno 2 edizioni)
+  if (dati.length >= 2) {
+    // Calcola regressione lineare semplice
+    const n = dati.length;
+    const xs = dati.map((_, i) => i);
+    const ys = dati.map(d => d.val);
+    const sumX = xs.reduce((a, b) => a + b, 0);
+    const sumY = ys.reduce((a, b) => a + b, 0);
+    const sumXY = xs.reduce((acc, x, i) => acc + x * ys[i], 0);
+    const sumX2 = xs.reduce((acc, x) => acc + x * x, 0);
+    const m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const b = (sumY - m * sumX) / n;
+
+    ctx.save();
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = 'rgba(212,168,67,0.75)';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    dati.forEach((d, i) => {
+      const trendVal = m * i + b;
+      const cx = paddingLeft + i * step + step / 2;
+      const y = paddingTop + chartH - (Math.max(0, Math.min(100, trendVal)) / 100) * chartH;
+      if (i === 0) ctx.moveTo(cx, y);
+      else ctx.lineTo(cx, y);
+    });
+    ctx.stroke();
+    ctx.restore();
+
+    // Legenda tendenza
+    ctx.save();
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = 'rgba(212,168,67,0.75)';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, H - 12);
+    ctx.lineTo(paddingLeft + 20, H - 12);
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '10px Segoe UI, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Tendenza', paddingLeft + 24, H - 8);
+  }
+}
+</script>
+
+<!-- ===== PAGE: REPORT PROGRAMMAZIONE ===== -->
+<div class="page" id="page-report">
+  <div class="section-wrap">
+    <div class="section-header no-print">
+      <div>
+        <div class="section-title">📋 Report <span>Programmazione</span></div>
+        <div class="section-subtitle" id="report-edition-label">Edizione: —</div>
+      </div>
+      <button class="btn btn-print no-print" onclick="printReport()">🖨️ Stampa / Scarica PDF</button>
+    </div>
+
+    <div class="report-wrap">
+      <div class="report-header-block">
+        <div class="report-title">MBS Emilia — Report di Programmazione</div>
+        <div class="report-edition-sub" id="report-edition-print">Edizione: —</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">N.</th>
+              <th>Partner</th>
+              <th>Consulente</th>
+              <th>Nome e Cognome</th>
+              <th>Azienda</th>
+              <th>Manuale / Corso</th>
+              <th>Esercizio</th>
+              <th>Programmazione</th>
+            </tr>
+          </thead>
+          <tbody id="report-tbody"></tbody>
+        </table>
+      </div>
+      <div id="report-empty" class="empty-state" style="display:none;color:#666;">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">Nessun iscritto con presenza attiva in questa edizione.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 5: DISPOSIZIONI BANCHI ===== -->
+<div class="page" id="page-disposizioni">
+  <div class="section-wrap">
+    <div class="section-header no-print">
+      <div>
+        <div class="section-title">🪑 Disposizioni <span>Banchi</span></div>
+        <div class="section-subtitle" id="disp-edition-label">Edizione: —</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-print no-print" onclick="printDisposizione()">🖨️ Stampa piantina</button>
+      </div>
+    </div>
+
+    <!-- Tab G1/G2 -->
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:16px;">
+      <button id="tab-disp-g1" class="btn btn-primary" onclick="switchDispTab(1)">Giorno 1</button>
+      <button id="tab-disp-g2" class="btn btn-outline" onclick="switchDispTab(2)">Giorno 2</button>
+    </div>
+
+    <!-- Controlli -->
+    <div class="disp-controls no-print">
+      <div class="disp-controls-group">
+        <span class="disp-controls-label">Disposizione</span>
+        <select class="disp-select" id="disp-sel" onchange="selectDisposizione(this.value)">
+          <option value="">— Seleziona —</option>
+        </select>
+      </div>
+      <div class="disp-controls-group">
+        <span class="disp-controls-label">Nuova disposizione</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="disp-new-name" placeholder="Es. Giugno 2026 - A"
+            style="background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:8px 12px;border-radius:6px;font-size:0.82rem;outline:none;width:190px;"
+            onkeydown="if(event.key==='Enter')addDisposizione()">
+          <button class="btn btn-primary" style="padding:8px 14px;font-size:0.8rem;" onclick="addDisposizione()">+ Aggiungi</button>
+          <button class="btn btn-danger" style="padding:8px 12px;font-size:0.8rem;" onclick="removeDisposizione()" title="Elimina disposizione selezionata">✕</button>
+        </div>
+      </div>
+      <div class="disp-controls-group" id="disp-schema-group" style="display:none;">
+        <span class="disp-controls-label">Schema layout</span>
+        <div class="disp-schema-group" id="disp-schema-radios"></div>
+      </div>
+    </div>
+
+    <!-- Piantina -->
+    <div id="disp-piantina-wrap">
+      <div class="empty-state" id="disp-empty">
+        <div class="empty-state-icon">🪑</div>
+        <div class="empty-state-text">Nessuna disposizione selezionata. Creane una nuova o selezionane una esistente.</div>
+      </div>
+      <div id="disp-piantina" class="disp-piantina" style="display:none;"></div>
+    </div>
+
+    <!-- Supervisori -->
+    <div class="disp-supervisori-block no-print" id="disp-supervisori-section" style="display:none;">
+      <div class="section-title" style="font-size:1rem;margin-bottom:4px;">Supervisori</div>
+      <table class="disp-sup-table">
+        <thead>
+          <tr>
+            <th style="font-size:0.7rem;color:var(--rosa);padding:6px 10px;text-transform:uppercase;letter-spacing:0.07em;">Nome</th>
+            <th style="font-size:0.7rem;color:var(--rosa);padding:6px 10px;text-transform:uppercase;letter-spacing:0.07em;">Cognome</th>
+            <th style="width:50px;"></th>
+          </tr>
+        </thead>
+        <tbody id="disp-sup-tbody"></tbody>
+      </table>
+      <div class="disp-add-sup-row">
+        <input type="text" id="disp-sup-nome-in" placeholder="Nome">
+        <input type="text" id="disp-sup-cognome-in" placeholder="Cognome">
+        <button class="btn btn-outline" style="padding:7px 14px;font-size:0.8rem;" onclick="addSupervisore()">+ Aggiungi supervisore</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE 6: FOGLIETTINI ===== -->
+<div class="page" id="page-fogliettini">
+  <div class="section-wrap">
+    <div class="section-header no-print">
+      <div>
+        <div class="section-title">🗒️ Fogliettini <span>Programmazione</span></div>
+        <div class="section-subtitle" id="fogl-edition-label">Edizione: —</div>
+      </div>
+      <button class="btn btn-print no-print" onclick="printFogliettini()">🖨️ Stampa fogliettini</button>
+    </div>
+    <div class="empty-state fogliettini-empty-state" id="fogl-empty" style="display:none;">
+      <div class="empty-state-icon">🗒️</div>
+      <div class="empty-state-text">Nessun iscritto con presenza attiva in questa edizione.</div>
+    </div>
+    <div class="fogliettini-grid" id="fogliettini-grid"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE 7: DEBRIEFING ===== -->
+<div class="page" id="page-debriefing">
+</div>
+
+<!-- ===== PAGE 8: INVENTARIO ===== -->
+<div class="page" id="page-inventario">
+  <div class="section-wrap">
+    <!-- Intestazione per stampa (nascosta a schermo) -->
+    <div class="inv-print-header">MBS Emilia — Inventario Materiali</div>
+
+    <div class="section-header no-print">
+      <div>
+        <div class="section-title">&#128230; Inventario <span>Materiali</span></div>
+        <div class="section-subtitle">Gestione giacenze e scorte minime</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-print no-print" onclick="printInventario()">&#128438; Stampa inventario</button>
+        <button class="btn btn-primary no-print" onclick="addProdotto()">&#43; Aggiungi prodotto</button>
+      </div>
+    </div>
+
+    <div class="inv-table-wrap">
+      <div style="overflow-x:auto;">
+        <table class="inv-table" id="inv-table" style="display:none;">
+          <thead>
+            <tr>
+              <th style="min-width:280px;">Descrizione</th>
+              <th style="width:140px;text-align:center;">Giacenza minima</th>
+              <th style="width:140px;text-align:center;">Giacenza attuale</th>
+              <th style="width:130px;text-align:center;">Stato</th>
+              <th style="width:60px;text-align:center;" class="no-print">Elimina</th>
+            </tr>
+          </thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+      <div id="inv-empty" class="empty-state">
+        <div class="empty-state-icon">&#128230;</div>
+        <div class="empty-state-text">Nessun prodotto in inventario. Clicca + Aggiungi prodotto per iniziare.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
