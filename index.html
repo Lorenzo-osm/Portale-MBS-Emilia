@@ -1916,6 +1916,198 @@
 
   .inv-print-header { display: none; }
 
+  /* ===== AUTH: LOGIN OVERLAY ===== */
+  #login-overlay {
+    position: fixed; inset: 0;
+    background: linear-gradient(160deg, #1a0d16 0%, #2a1122 100%);
+    z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  #login-overlay.hidden { display: none !important; }
+  .login-overlay-glow {
+    position: fixed; top: -140px; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 500px;
+    background: radial-gradient(ellipse, rgba(179,70,141,0.22) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .login-card {
+    background: var(--blu-acciaio);
+    border: 1px solid var(--rosa-border);
+    border-radius: 22px; padding: 48px 44px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 8px 48px rgba(26,13,22,0.8), 0 0 80px rgba(179,70,141,0.06);
+    text-align: center; position: relative; z-index: 1;
+  }
+  .login-logo-ring {
+    width: 80px; height: 80px; border-radius: 50%;
+    border: 2px solid var(--rosa-border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    background: var(--rosa-light);
+    box-shadow: 0 0 32px rgba(179,70,141,0.18);
+    font-size: 2rem;
+  }
+  .login-title {
+    font-size: 1.55rem; font-weight: 800; color: var(--testo-chiaro);
+    margin-bottom: 4px; letter-spacing: 0.04em;
+  }
+  .login-subtitle {
+    font-size: 0.76rem; color: var(--testo-muted); margin-bottom: 32px;
+    text-transform: uppercase; letter-spacing: 0.14em;
+  }
+  .auth-form-group { text-align: left; margin-bottom: 16px; }
+  .auth-form-label {
+    display: block; font-size: 0.68rem; font-weight: 700;
+    color: var(--testo-muted); letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .auth-form-input {
+    width: 100%; padding: 11px 14px;
+    border: 1px solid var(--input-border); border-radius: 8px;
+    font-size: 0.9rem; font-family: inherit; outline: none;
+    background: var(--input-bg); color: var(--testo-chiaro);
+    transition: border-color 0.2s;
+  }
+  .auth-form-input:focus { border-color: var(--rosa); }
+  .auth-form-select {
+    width: 100%; padding: 11px 36px 11px 14px;
+    border: 1px solid var(--input-border); border-radius: 8px;
+    font-size: 0.9rem; font-family: inherit; outline: none;
+    background: var(--input-bg); color: var(--testo-chiaro);
+    cursor: pointer; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b3468d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    transition: border-color 0.2s;
+  }
+  .auth-form-select:focus { border-color: var(--rosa); }
+  .auth-form-select option { background: var(--blu-notte); }
+  .auth-login-btn {
+    width: 100%; padding: 12px; margin-top: 8px;
+    background: var(--rosa); color: #fff; border: none;
+    border-radius: 9px; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  .auth-login-btn:hover { background: var(--rosa-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(179,70,141,0.38); }
+  .login-error-msg {
+    background: rgba(224,85,85,0.1); color: #e05555;
+    border: 1px solid rgba(224,85,85,0.25); border-radius: 7px;
+    padding: 9px 14px; font-size: 0.82rem; font-weight: 600;
+    margin-bottom: 16px; display: none; text-align: left;
+  }
+  .login-error-msg.show { display: block; }
+
+  /* ===== AUTH: NAVBAR ELEMENTS ===== */
+  .nav-user-badge {
+    font-size: 0.76rem; color: var(--testo-muted); font-weight: 600;
+    padding: 5px 12px; border-radius: 20px; background: var(--blu-acciaio);
+    border: 1px solid var(--rosa-border); white-space: nowrap;
+    max-width: 180px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .nav-btn-admin-pill {
+    background: var(--rosa); color: #fff; border: none;
+    padding: 6px 14px; border-radius: 6px; font-size: 0.82rem;
+    cursor: pointer; transition: all 0.2s; font-weight: 700;
+    font-family: inherit; white-space: nowrap;
+  }
+  .nav-btn-admin-pill:hover { background: var(--rosa-hover); }
+  .nav-btn-logout {
+    background: transparent; border: 1px solid rgba(255,255,255,0.12);
+    color: var(--testo-muted); padding: 6px 12px; border-radius: 6px;
+    font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+    font-family: inherit; white-space: nowrap;
+  }
+  .nav-btn-logout:hover { border-color: #e05555; color: #e05555; }
+
+  /* ===== AUTH: ADMIN PANEL ===== */
+  .admin-panel-wrap { max-width: 920px; margin: 0 auto; padding: 36px 24px 60px; }
+  .admin-panel-tabs {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    border-bottom: 1px solid var(--card-border); padding-bottom: 0;
+    flex-wrap: wrap;
+  }
+  .admin-panel-tab {
+    background: transparent; border: none; border-bottom: 2px solid transparent;
+    color: var(--testo-muted); padding: 9px 20px; margin-bottom: -1px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; font-family: inherit; border-radius: 6px 6px 0 0;
+  }
+  .admin-panel-tab:hover { color: var(--rosa); background: var(--rosa-light); }
+  .admin-panel-tab.active { color: var(--rosa); border-bottom-color: var(--rosa); background: transparent; }
+  .admin-panel-section { display: none; }
+  .admin-panel-section.active { display: block; }
+  .admin-card {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: 14px; padding: 24px 28px; margin-bottom: 16px;
+    backdrop-filter: blur(6px);
+  }
+  .admin-card-title {
+    font-size: 0.72rem; font-weight: 800; color: var(--testo-muted);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .admin-card-title::before {
+    content: ''; width: 3px; height: 14px;
+    background: var(--rosa); border-radius: 2px; flex-shrink: 0;
+  }
+  .user-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(26,13,22,0.5); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 9px; padding: 11px 16px; margin-bottom: 6px;
+  }
+  .user-row-name { font-size: 0.9rem; font-weight: 700; color: var(--testo-chiaro); min-width: 120px; }
+  .user-row-email { font-size: 0.8rem; color: var(--testo-muted); flex: 1; word-break: break-all; min-width: 140px; }
+  .user-row-badge {
+    font-size: 0.68rem; color: var(--rosa); background: var(--rosa-light);
+    border: 1px solid var(--rosa-border); border-radius: 6px;
+    padding: 2px 9px; font-weight: 700; flex-shrink: 0;
+  }
+  .user-row-badge.pm {
+    color: var(--oro); background: var(--oro-light);
+    border-color: rgba(212,168,67,0.4);
+  }
+  .auth-alert {
+    padding: 10px 14px; border-radius: 8px; font-size: 0.82rem;
+    font-weight: 600; margin-bottom: 14px; display: none;
+  }
+  .auth-alert.show { display: block; }
+  .auth-alert-ok { background: rgba(61,191,138,0.1); color: #3dbf8a; border: 1px solid rgba(61,191,138,0.3); }
+  .auth-alert-err { background: rgba(224,85,85,0.1); color: #e05555; border: 1px solid rgba(224,85,85,0.25); }
+  .auth-form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .auth-form-row .auth-form-group { flex: 1; min-width: 150px; }
+  .auth-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--rosa-border), transparent); margin: 18px 0; }
+
+  /* ===== CONSULENTE VIEW: restrizioni sola lettura ===== */
+  body.ruolo-consulente #page-home,
+  body.ruolo-consulente #page-clienti,
+  body.ruolo-consulente #page-firme,
+  body.ruolo-consulente #page-report,
+  body.ruolo-consulente #page-disposizioni,
+  body.ruolo-consulente #page-fogliettini,
+  body.ruolo-consulente #page-debriefing,
+  body.ruolo-consulente #page-inventario,
+  body.ruolo-consulente #page-admin { display: none !important; }
+
+  body.ruolo-consulente #nav-home,
+  body.ruolo-consulente #nav-clienti,
+  body.ruolo-consulente #nav-firme,
+  body.ruolo-consulente #nav-report,
+  body.ruolo-consulente #nav-disposizioni,
+  body.ruolo-consulente #nav-fogliettini,
+  body.ruolo-consulente #nav-debriefing,
+  body.ruolo-consulente #nav-inventario { display: none !important; }
+
+  body.ruolo-consulente #page-iscritti .section-header > div:last-child,
+  body.ruolo-consulente #page-iscritti .filtri-iscritti,
+  body.ruolo-consulente #page-iscritti details.corsi-manager,
+  body.ruolo-consulente #iscritti-counter { display: none !important; }
+
+  body.ruolo-consulente #iscritti-tbody .td-input,
+  body.ruolo-consulente #iscritti-tbody .td-textarea { pointer-events: none !important; background: rgba(255,255,255,0.02) !important; resize: none !important; }
+  body.ruolo-consulente #iscritti-tbody .td-select { pointer-events: none !important; opacity: 0.8; }
+  body.ruolo-consulente #iscritti-tbody .toggle-presenza { pointer-events: none !important; opacity: 0.65; }
+  body.ruolo-consulente #iscritti-tbody .btn { display: none !important; }
+
   /* ===== MODALE TRASFERIMENTO ===== */
   .modal-overlay {
     position: fixed;
@@ -2072,19 +2264,46 @@
 </head>
 <body>
 
+<!-- ===== OVERLAY CARICAMENTO ===== -->
+<div id="loading-overlay" style="position:fixed;inset:0;background:#1a0d16;display:flex;align-items:center;justify-content:center;z-index:9998;color:white;font-size:1.3rem;letter-spacing:0.06em;flex-direction:column;gap:16px;">
+  <div style="width:40px;height:40px;border:3px solid rgba(179,70,141,0.3);border-top-color:#b3468d;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <span>Caricamento...</span>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<!-- ===== LOGIN OVERLAY ===== -->
+<div id="login-overlay" class="hidden">
+  <div class="login-overlay-glow"></div>
+  <div class="login-card">
+    <div class="login-logo-ring">&#127979;</div>
+    <div class="login-title">MBS Emilia</div>
+    <div class="login-subtitle">Portale di Monitoraggio &mdash; Accesso riservato</div>
+    <div class="login-error-msg" id="login-error">Email o password non corretti.</div>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="login-email">Email</label>
+      <input type="email" id="login-email" class="auth-form-input"
+             placeholder="nome@osmpartnerbologna.it" autocomplete="email">
+    </div>
+    <div class="auth-form-group">
+      <label class="auth-form-label" for="login-password">Password</label>
+      <input type="password" id="login-password" class="auth-form-input"
+             placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="auth-login-btn" onclick="doLogin()">Accedi</button>
+  </div>
+</div>
+
 <!-- ===== NAVBAR ===== -->
-<nav class="navbar">
+<nav class="navbar" id="main-navbar" style="display:none;">
   <div class="navbar-brand" onclick="showPage('home')">
     <span></span>
     <img id="logo-navbar" src="img/Logo%20MBS.png" alt="MBS Emilia" style="height:36px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
     MBS Emilia
   </div>
-  <!-- Overlay caricamento -->
-  <div id="loading-overlay" style="position:fixed;inset:0;background:#1a0d16;display:flex;align-items:center;justify-content:center;z-index:9999;color:white;font-size:1.3rem;letter-spacing:0.06em;flex-direction:column;gap:16px;">
-    <div style="width:40px;height:40px;border:3px solid rgba(179,70,141,0.3);border-top-color:#b3468d;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-    <span>Caricamento...</span>
-  </div>
-  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  <!-- placeholder invisibile per showPage('admin') -->
+  <button id="nav-admin" style="display:none;position:absolute;pointer-events:none;" aria-hidden="true"></button>
 
   <button class="nav-btn" onclick="showPage('home')" id="nav-home">Home</button>
   <button class="nav-btn" onclick="showPage('clienti')" id="nav-clienti">Clienti</button>
@@ -2097,6 +2316,9 @@
   <button class="nav-btn" onclick="showPage('debriefing')" id="nav-debriefing">Debriefing</button>
   <button class="nav-btn" onclick="showPage('inventario')" id="nav-inventario">Inventario</button>
   <div class="edition-badge" id="navbar-edition">—</div>
+  <div class="nav-user-badge" id="nav-user-badge"></div>
+  <button class="nav-btn-admin-pill" id="nav-admin-btn" onclick="showPage('admin')" style="display:none;">&#9881; Admin</button>
+  <button class="nav-btn-logout" id="nav-logout-btn" onclick="doLogout()">Esci</button>
 </nav>
 
 <!-- ===== TOAST ===== -->
@@ -2560,6 +2782,119 @@
   </div>
 </div>
 
+<!-- ===== PAGE: ADMIN ===== -->
+<div class="page" id="page-admin">
+  <div class="admin-panel-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-title">&#9881; Pannello <span>Admin</span></div>
+        <div class="section-subtitle">Gestione account utenti e credenziali</div>
+      </div>
+    </div>
+
+    <div class="admin-panel-tabs">
+      <button class="admin-panel-tab active" data-atab="gestione" onclick="switchAdminTab('gestione')">Gestione Account</button>
+      <button class="admin-panel-tab" data-atab="impostazioni" onclick="switchAdminTab('impostazioni')">Impostazioni Account</button>
+    </div>
+
+    <!-- TAB: GESTIONE ACCOUNT -->
+    <div class="admin-panel-section active" id="admin-tab-gestione">
+      <div class="admin-card">
+        <div class="admin-card-title">Account registrati</div>
+        <div id="admin-users-list"></div>
+        <div id="admin-users-empty" style="font-size:0.83rem;color:var(--testo-muted);padding:10px 0;display:none;">
+          Nessun account aggiuntivo. Crea il primo account qui sotto.
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-card-title">Crea nuovo account</div>
+        <div class="auth-alert auth-alert-err" id="alert-new-err"></div>
+        <div class="auth-alert auth-alert-ok" id="alert-new-ok"></div>
+        <div class="auth-form-row">
+          <div class="auth-form-group">
+            <label class="auth-form-label">Nome</label>
+            <input type="text" id="new-nome" class="auth-form-input" placeholder="Nome">
+          </div>
+          <div class="auth-form-group">
+            <label class="auth-form-label">Cognome</label>
+            <input type="text" id="new-cognome" class="auth-form-input" placeholder="Cognome">
+          </div>
+        </div>
+        <div class="auth-form-row">
+          <div class="auth-form-group">
+            <label class="auth-form-label">Email</label>
+            <input type="email" id="new-email" class="auth-form-input" placeholder="nome@email.it">
+          </div>
+          <div class="auth-form-group">
+            <label class="auth-form-label">Password</label>
+            <input type="password" id="new-password" class="auth-form-input" placeholder="Password">
+          </div>
+        </div>
+        <div class="auth-form-group" style="max-width:260px;">
+          <label class="auth-form-label">Ruolo</label>
+          <select id="new-ruolo" class="auth-form-select">
+            <option value="pm">Project Manager</option>
+            <option value="consulente">Consulente</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="margin-top:4px;" onclick="adminAddUser()">&#43; Crea account</button>
+      </div>
+    </div>
+
+    <!-- TAB: IMPOSTAZIONI ACCOUNT -->
+    <div class="admin-panel-section" id="admin-tab-impostazioni">
+      <div class="admin-card">
+        <div class="admin-card-title">Modifica credenziali amministratore</div>
+        <div class="auth-alert auth-alert-err" id="alert-acc-err"></div>
+        <div class="auth-alert auth-alert-ok" id="alert-acc-ok"></div>
+        <div class="auth-form-group">
+          <label class="auth-form-label">Password attuale (richiesta per confermare)</label>
+          <input type="password" id="acc-pwd-current" class="auth-form-input" placeholder="Password attuale">
+        </div>
+        <div class="auth-divider"></div>
+        <div class="auth-form-group">
+          <label class="auth-form-label">Nuova email &mdash; lascia vuoto per non modificare</label>
+          <input type="email" id="acc-email-new" class="auth-form-input" placeholder="Nuova email">
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-form-label">Nuova password &mdash; lascia vuoto per non modificare</label>
+          <input type="password" id="acc-pwd-new" class="auth-form-input" placeholder="Nuova password">
+        </div>
+        <button class="btn btn-primary" onclick="adminSaveAccount()">Salva modifiche</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AUTH CORE (deve essere prima di init()) ===== -->
+<script>
+// Le costanti e gli helper di storage devono essere disponibili quando init() viene chiamata
+const AUTH_KEYS = {
+  admin:   'mbse_auth_admin',
+  users:   'mbse_auth_users',
+  session: 'mbse_auth_session'
+};
+
+function authLs(key)           { try { const v = localStorage.getItem(key);   return v ? JSON.parse(v) : null; } catch(e) { return null; } }
+function authLsSave(key, val)  { localStorage.setItem(key, JSON.stringify(val)); }
+function authSsGet(key)        { try { const v = sessionStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
+function authSsSave(key, val)  { sessionStorage.setItem(key, JSON.stringify(val)); }
+
+function initAuth() {
+  if (!authLs(AUTH_KEYS.admin)) {
+    authLsSave(AUTH_KEYS.admin, {
+      email:    'l.gorgo@osmpartnerbologna.it',
+      password: 'Dybalronaldo055!',
+      nome:     'Lorenzo',
+      cognome:  'Gorgo'
+    });
+  }
+  if (!authLs(AUTH_KEYS.users)) {
+    authLsSave(AUTH_KEYS.users, []);
+  }
+}
+</script>
+
 <!-- ===== FIREBASE ===== -->
 <script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore-compat.js"></script>
@@ -2707,11 +3042,29 @@ function formatEur(val) {
 }
 
 // ===== NAVIGAZIONE =====
+const PAGINE_CONSENTITE = {
+  admin:     ['home','clienti','iscritti','firme','storico','report','disposizioni','fogliettini','debriefing','inventario','admin'],
+  pm:        ['home','clienti','iscritti','firme','storico','report','disposizioni','fogliettini','debriefing','inventario'],
+  consulente:['iscritti','storico']
+};
+
 function showPage(name) {
+  // Controllo permessi
+  const sess = authSsGet(AUTH_KEYS.session);
+  if (sess) {
+    const consentite = PAGINE_CONSENTITE[sess.ruolo] || [];
+    if (!consentite.includes(name)) {
+      // Reindirizza alla pagina di default per il ruolo
+      name = (sess.ruolo === 'consulente') ? 'iscritti' : 'home';
+    }
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('nav-' + name).classList.add('active');
+  const pageEl = document.getElementById('page-' + name);
+  if (pageEl) pageEl.classList.add('active');
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
   if (name === 'home') { renderRegoleSconto(); renderPMManager(); }
   if (name === 'iscritti') renderIscritti();
   if (name === 'firme') renderFirme();
@@ -2722,6 +3075,7 @@ function showPage(name) {
   if (name === 'fogliettini') renderFogliettini();
   if (name === 'debriefing') { syncDebriefing(); renderDebriefing(); }
   if (name === 'inventario') renderInventario();
+  if (name === 'admin') renderAdminPanel();
   window.scrollTo(0, 0);
 }
 
@@ -4768,18 +5122,27 @@ function showErrorOverlay(msg) {
 }
 
 async function init() {
+  initAuth(); // inizializza account admin di default se non esiste
+
+  const sess = authSsGet(AUTH_KEYS.session);
+  if (!sess) {
+    // Nessuna sessione attiva: mostra login, nascondi loading
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+    document.getElementById('login-overlay').classList.remove('hidden');
+    return;
+  }
+
+  // Sessione valida: carica dati e avvia
   await load();
   syncDebriefing();
   renderEdizioni();
   renderPartners();
   renderCorsiTags();
 
-  // Imposta nav-home come active
-  document.getElementById('nav-home').classList.add('active');
-
-  // Nascondi overlay di caricamento
   const overlay = document.getElementById('loading-overlay');
   if (overlay) overlay.style.display = 'none';
+  avviaSessione();
 }
 
 init();
@@ -5690,6 +6053,275 @@ function onFiltroIscrittiChange() {
   const ricercaEl = document.getElementById('filtro-ricerca');
   filtroRicercaAttivo = ricercaEl ? ricercaEl.value.trim().toLowerCase() : '';
   renderIscritti();
+}
+</script>
+
+<!-- ===== AUTH SYSTEM — UI & SESSION ===== -->
+<script>
+// AUTH_KEYS, authLs, authLsSave, authSsGet, authSsSave, initAuth
+// sono definiti nel blocco AUTH CORE sopra (prima di Firebase)
+
+// =========================================================
+// LOGIN
+// =========================================================
+async function doLogin() {
+  const emailEl    = document.getElementById('login-email');
+  const passwordEl = document.getElementById('login-password');
+  const errEl      = document.getElementById('login-error');
+  const email      = emailEl.value.trim().toLowerCase();
+  const password   = passwordEl.value;
+
+  errEl.classList.remove('show');
+  if (!email || !password) { errEl.textContent = 'Inserisci email e password.'; errEl.classList.add('show'); return; }
+
+  // Controlla Admin
+  const admin = authLs(AUTH_KEYS.admin);
+  if (admin && email === admin.email.toLowerCase() && password === admin.password) {
+    authSsSave(AUTH_KEYS.session, { ruolo: 'admin', email: admin.email, nome: admin.nome || 'Admin', cognome: admin.cognome || '' });
+    await _avviaDopoLogin();
+    return;
+  }
+
+  // Controlla utenti PM / Consulente
+  const users = authLs(AUTH_KEYS.users) || [];
+  const user  = users.find(u => u.email.toLowerCase() === email && u.password === password);
+  if (user) {
+    authSsSave(AUTH_KEYS.session, { ruolo: user.ruolo, email: user.email, nome: user.nome || '', cognome: user.cognome || '' });
+    await _avviaDopoLogin();
+    return;
+  }
+
+  errEl.textContent = 'Email o password non corretti.';
+  errEl.classList.add('show');
+}
+
+async function _avviaDopoLogin() {
+  // Nascondi login, mostra loading
+  document.getElementById('login-overlay').classList.add('hidden');
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.style.display = 'flex';
+
+  // Carica dati Firestore
+  await load();
+  syncDebriefing();
+  renderEdizioni();
+  renderPartners();
+  renderCorsiTags();
+
+  if (overlay) overlay.style.display = 'none';
+  avviaSessione();
+}
+
+// =========================================================
+// AVVIA SESSIONE (applica UI per ruolo)
+// =========================================================
+function avviaSessione() {
+  const sess = authSsGet(AUTH_KEYS.session);
+  if (!sess) return;
+
+  // Mostra navbar
+  document.getElementById('main-navbar').style.display = 'flex';
+
+  // Badge utente
+  const badge = document.getElementById('nav-user-badge');
+  const nomeCognome = ((sess.nome || '') + ' ' + (sess.cognome || '')).trim() || sess.email;
+  badge.textContent = nomeCognome;
+
+  // Pulsante Admin (solo per admin)
+  if (sess.ruolo === 'admin') {
+    document.getElementById('nav-admin-btn').style.display = '';
+  }
+
+  // Applica classe body per CSS consulente
+  if (sess.ruolo === 'consulente') {
+    document.body.classList.add('ruolo-consulente');
+    showPage('iscritti');
+  } else {
+    document.getElementById('nav-home').classList.add('active');
+    document.getElementById('page-home').classList.add('active');
+    renderRegoleSconto();
+    renderPMManager();
+  }
+}
+
+// =========================================================
+// LOGOUT
+// =========================================================
+function doLogout() {
+  sessionStorage.removeItem(AUTH_KEYS.session);
+  location.reload();
+}
+
+// =========================================================
+// ADMIN PANEL — RENDER
+// =========================================================
+function renderAdminPanel() {
+  renderAdminUsersList();
+  // Reset alert
+  _showAuthAlert('alert-new-err', false);
+  _showAuthAlert('alert-new-ok', false);
+  _showAuthAlert('alert-acc-err', false);
+  _showAuthAlert('alert-acc-ok', false);
+  document.getElementById('acc-pwd-current').value = '';
+  document.getElementById('acc-email-new').value = '';
+  document.getElementById('acc-pwd-new').value = '';
+}
+
+function renderAdminUsersList() {
+  const container = document.getElementById('admin-users-list');
+  const emptyEl   = document.getElementById('admin-users-empty');
+  const users = authLs(AUTH_KEYS.users) || [];
+  container.innerHTML = '';
+
+  if (users.length === 0) {
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  users.forEach((u, idx) => {
+    const nomeCompleto = ((u.nome || '') + ' ' + (u.cognome || '')).trim() || '—';
+    const ruoloLabel = u.ruolo === 'pm' ? 'Project Manager' : 'Consulente';
+    const badgeClass = u.ruolo === 'pm' ? 'user-row-badge pm' : 'user-row-badge';
+    const row = document.createElement('div');
+    row.className = 'user-row';
+    row.innerHTML = `
+      <div class="user-row-name">${escHtml(nomeCompleto)}</div>
+      <div class="user-row-email">${escHtml(u.email)}</div>
+      <div class="${badgeClass}">${escHtml(ruoloLabel)}</div>
+      <button class="btn btn-danger" style="padding:4px 10px;font-size:0.75rem;" onclick="adminDeleteUser(${idx})">&#10005;</button>`;
+    container.appendChild(row);
+  });
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-panel-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.atab === tab);
+  });
+  document.querySelectorAll('.admin-panel-section').forEach(sec => {
+    sec.classList.remove('active');
+  });
+  const secEl = document.getElementById('admin-tab-' + tab);
+  if (secEl) secEl.classList.add('active');
+  if (tab === 'gestione') renderAdminUsersList();
+}
+
+// =========================================================
+// ADMIN: AGGIUNGI UTENTE
+// =========================================================
+function adminAddUser() {
+  const nome     = document.getElementById('new-nome').value.trim();
+  const cognome  = document.getElementById('new-cognome').value.trim();
+  const email    = document.getElementById('new-email').value.trim().toLowerCase();
+  const password = document.getElementById('new-password').value;
+  const ruolo    = document.getElementById('new-ruolo').value;
+
+  _showAuthAlert('alert-new-err', false);
+  _showAuthAlert('alert-new-ok', false);
+
+  if (!nome || !cognome || !email || !password) {
+    return _showAuthAlert('alert-new-err', true, 'Compila tutti i campi obbligatori.');
+  }
+  if (!email.includes('@')) {
+    return _showAuthAlert('alert-new-err', true, 'Inserisci un\'email valida.');
+  }
+
+  // Controlla duplicati (anche contro l'admin)
+  const admin = authLs(AUTH_KEYS.admin);
+  if (admin && email === admin.email.toLowerCase()) {
+    return _showAuthAlert('alert-new-err', true, 'Questa email corrisponde all\'account Admin.');
+  }
+  const users = authLs(AUTH_KEYS.users) || [];
+  if (users.some(u => u.email.toLowerCase() === email)) {
+    return _showAuthAlert('alert-new-err', true, 'Esiste già un account con questa email.');
+  }
+
+  users.push({ id: _authUid(), email, password, nome, cognome, ruolo });
+  authLsSave(AUTH_KEYS.users, users);
+
+  // Reset form
+  ['new-nome','new-cognome','new-email','new-password'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('new-ruolo').value = 'pm';
+
+  _showAuthAlert('alert-new-ok', true, 'Account creato: ' + nome + ' ' + cognome + ' (' + (ruolo === 'pm' ? 'Project Manager' : 'Consulente') + ')');
+  renderAdminUsersList();
+}
+
+// =========================================================
+// ADMIN: ELIMINA UTENTE
+// =========================================================
+function adminDeleteUser(idx) {
+  const users = authLs(AUTH_KEYS.users) || [];
+  if (idx < 0 || idx >= users.length) return;
+  const u = users[idx];
+  const nomeCompleto = ((u.nome || '') + ' ' + (u.cognome || '')).trim() || u.email;
+  if (!confirm('Eliminare l\'account di ' + nomeCompleto + '?\nL\'operazione non è reversibile.')) return;
+  users.splice(idx, 1);
+  authLsSave(AUTH_KEYS.users, users);
+  renderAdminUsersList();
+}
+
+// =========================================================
+// ADMIN: SALVA CREDENZIALI ADMIN
+// =========================================================
+function adminSaveAccount() {
+  const pwdCurrent = document.getElementById('acc-pwd-current').value;
+  const emailNew   = document.getElementById('acc-email-new').value.trim().toLowerCase();
+  const pwdNew     = document.getElementById('acc-pwd-new').value;
+
+  _showAuthAlert('alert-acc-err', false);
+  _showAuthAlert('alert-acc-ok', false);
+
+  const admin = authLs(AUTH_KEYS.admin);
+  if (!admin) return;
+
+  if (!pwdCurrent) {
+    return _showAuthAlert('alert-acc-err', true, 'Inserisci la password attuale per confermare.');
+  }
+  if (pwdCurrent !== admin.password) {
+    return _showAuthAlert('alert-acc-err', true, 'Password attuale non corretta.');
+  }
+  if (!emailNew && !pwdNew) {
+    return _showAuthAlert('alert-acc-err', true, 'Inserisci la nuova email e/o la nuova password.');
+  }
+
+  // Controlla che la nuova email non sia già usata da altri account
+  if (emailNew && emailNew !== admin.email.toLowerCase()) {
+    const users = authLs(AUTH_KEYS.users) || [];
+    if (users.some(u => u.email.toLowerCase() === emailNew)) {
+      return _showAuthAlert('alert-acc-err', true, 'Questa email è già usata da un altro account.');
+    }
+  }
+
+  if (emailNew) admin.email = emailNew;
+  if (pwdNew)   admin.password = pwdNew;
+  authLsSave(AUTH_KEYS.admin, admin);
+
+  // Aggiorna sessione
+  const sess = authSsGet(AUTH_KEYS.session);
+  if (sess) { if (emailNew) sess.email = emailNew; authSsSave(AUTH_KEYS.session, sess); }
+
+  document.getElementById('acc-pwd-current').value = '';
+  document.getElementById('acc-email-new').value = '';
+  document.getElementById('acc-pwd-new').value = '';
+  document.getElementById('nav-user-badge').textContent =
+    ((admin.nome || '') + ' ' + (admin.cognome || '')).trim() || admin.email;
+
+  _showAuthAlert('alert-acc-ok', true, 'Credenziali aggiornate con successo.');
+}
+
+// =========================================================
+// UTILITY AUTH
+// =========================================================
+function _showAuthAlert(id, show, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (show) { el.textContent = msg || ''; el.classList.add('show'); }
+  else { el.classList.remove('show'); }
+}
+
+function _authUid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 </script>
 
