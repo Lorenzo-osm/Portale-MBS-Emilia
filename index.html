@@ -2097,6 +2097,10 @@
   body.ruolo-consulente #nav-debriefing,
   body.ruolo-consulente #nav-inventario { display: none !important; }
 
+  /* Nella vista consulente, statistiche è visibile ma in sola lettura */
+  body.ruolo-consulente #page-statistiche .stat-mese-input { pointer-events: none !important; opacity: 0.75; }
+  body.ruolo-consulente #page-statistiche .stat-anno-add-wrap { display: none !important; }
+
   body.ruolo-consulente #page-iscritti .section-header > div:last-child,
   body.ruolo-consulente #page-iscritti .filtri-iscritti,
   body.ruolo-consulente #page-iscritti details.corsi-manager,
@@ -2187,6 +2191,316 @@
     gap: 10px;
     margin-top: 24px;
     justify-content: flex-end;
+  }
+
+  /* ===== ORGANIGRAMMA ===== */
+  .org-tree-wrap {
+    overflow-x: auto;
+    padding: 28px 12px 36px;
+    min-height: 120px;
+    text-align: center;
+  }
+
+  /* Albero top-down con display:table */
+  .org-ul {
+    display: table;
+    margin: 0 auto;
+    padding-top: 30px;
+    position: relative;
+    list-style: none;
+  }
+  .org-ul > li {
+    display: table-cell;
+    padding: 0 12px;
+    position: relative;
+    vertical-align: top;
+    text-align: center;
+  }
+
+  /* Linea verticale che sale verso il genitore */
+  .org-ul > li::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    border-left: 1px solid rgba(179,70,141,0.4);
+    height: 30px;
+  }
+
+  /* Linea orizzontale che collega i fratelli */
+  .org-ul > li::after {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: 0;
+    border-top: 1px solid rgba(179,70,141,0.4);
+    width: 100%;
+  }
+  .org-ul > li:first-child::after { left: 50%; width: 50%; }
+  .org-ul > li:last-child::after  { width: 50%; }
+  .org-ul > li:only-child::before,
+  .org-ul > li:only-child::after  { display: none; }
+
+  /* Livello radice: nessun connettore in alto */
+  .org-root { padding-top: 0; }
+  .org-root > li::before,
+  .org-root > li::after { display: none !important; }
+
+  /* Nodo dell'organigramma */
+  .org-node-box {
+    display: inline-block;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 120px;
+    max-width: 200px;
+    position: relative;
+    backdrop-filter: blur(6px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 0;
+  }
+  .org-node-box:hover {
+    border-color: var(--rosa-border);
+    box-shadow: 0 0 14px rgba(179,70,141,0.18);
+  }
+  .org-node-nome {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--testo-chiaro);
+    margin-bottom: 3px;
+    word-break: break-word;
+  }
+  .org-node-ruolo {
+    font-size: 0.67rem;
+    color: var(--rosa);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    word-break: break-word;
+  }
+  .org-node-btns {
+    margin-top: 8px;
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+  }
+  .org-btn-edit, .org-btn-del {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 5px;
+    color: var(--testo-muted);
+    cursor: pointer;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    transition: all 0.18s;
+    font-family: inherit;
+  }
+  .org-btn-edit:hover { color: var(--rosa); border-color: var(--rosa-border); }
+  .org-btn-del:hover  { color: var(--danger); border-color: rgba(224,85,85,0.4); }
+
+  /* Consulente: sola lettura organigramma */
+  body.ruolo-consulente .org-node-btns  { display: none !important; }
+  body.ruolo-consulente #org-add-form   { display: none !important; }
+
+  /* ===== ALERT BADGE STATISTICHE ===== */
+  .stat-alert-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(224,85,85,0.18);
+    border: 1px solid rgba(224,85,85,0.4);
+    color: #e05555;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    margin-left: 5px;
+    vertical-align: middle;
+    cursor: help;
+    letter-spacing: 0.03em;
+    animation: pulse-alert 2s infinite;
+  }
+  @keyframes pulse-alert {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+
+  /* ===== SEZIONE STATISTICHE ===== */
+  .stat-az-selector-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .stat-az-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--testo-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .stat-az-select {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--testo-chiaro);
+    padding: 9px 36px 9px 14px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b3468d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    min-width: 220px;
+    flex: 1;
+    max-width: 400px;
+    transition: border-color 0.2s;
+  }
+  .stat-az-select:focus { border-color: var(--rosa); }
+  .stat-az-select option { background: var(--blu-notte); }
+
+  .stat-sezione-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 26px 28px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(6px);
+  }
+  .stat-sezione-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--testo-chiaro);
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .stat-sezione-sub {
+    font-size: 0.75rem;
+    color: var(--testo-muted);
+    margin-bottom: 20px;
+  }
+  .stat-incremento-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(179,70,141,0.1);
+    border: 1px solid var(--rosa-border);
+    border-radius: 10px;
+    padding: 10px 18px;
+    margin-bottom: 22px;
+  }
+  .stat-incremento-label {
+    font-size: 0.72rem;
+    color: var(--testo-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .stat-incremento-val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--rosa);
+  }
+  .stat-incremento-val.positivo { color: var(--success); }
+  .stat-incremento-val.negativo { color: var(--danger); }
+
+  .stat-mesi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  @media (max-width: 700px) {
+    .stat-mesi-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .stat-mese-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-mese-label {
+    font-size: 0.65rem;
+    color: var(--testo-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .stat-anni-row {
+    display: flex;
+    gap: 4px;
+  }
+  .stat-anno-badge {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--testo-muted);
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    padding: 1px 4px;
+    flex: 1;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .stat-anno-badge.corrente { color: var(--rosa); background: var(--rosa-light); }
+  .stat-anno-badge.precedente { color: var(--oro); background: var(--oro-light); }
+  .stat-mese-input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--testo-chiaro);
+    padding: 5px 6px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    outline: none;
+    width: 100%;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .stat-mese-input:focus { border-color: var(--rosa); }
+  .stat-mese-input.anno-corrente:focus { border-color: var(--rosa); }
+  .stat-mese-input.anno-precedente:focus { border-color: var(--oro); }
+  .stat-mese-input.anno-corrente { border-color: rgba(179,70,141,0.25); }
+  .stat-mese-input.anno-precedente { border-color: rgba(212,168,67,0.25); }
+
+  .stat-chart-wrap {
+    background: rgba(26,13,22,0.5);
+    border: 1px solid rgba(179,70,141,0.12);
+    border-radius: 10px;
+    padding: 18px;
+    overflow-x: auto;
+    margin-top: 4px;
+  }
+  .stat-legenda {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .stat-legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--testo-muted);
+  }
+  .stat-legenda-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 
   /* ===== GRAFICO % FATTURATO IN CRESCITA — STORICO ===== */
@@ -2318,6 +2632,8 @@
   <button class="nav-btn" onclick="showPage('fogliettini')" id="nav-fogliettini">Fogliettini</button>
   <button class="nav-btn" onclick="showPage('debriefing')" id="nav-debriefing">Debriefing</button>
   <button class="nav-btn" onclick="showPage('inventario')" id="nav-inventario">Inventario</button>
+  <button class="nav-btn" onclick="showPage('statistiche')" id="nav-statistiche">Statistiche</button>
+  <button class="nav-btn" onclick="showPage('organigramma')" id="nav-organigramma">Organigramma</button>
   <div class="edition-badge" id="navbar-edition">—</div>
   <div class="nav-user-badge" id="nav-user-badge"></div>
   <button class="nav-btn-admin-pill" id="nav-admin-btn" onclick="showPage('admin')" style="display:none;">&#9881; Admin</button>
@@ -2456,6 +2772,16 @@
         <div class="home-nav-card-title">Inventario</div>
         <div class="home-nav-card-desc">Elenco materiali con giacenze minime e stato scorte</div>
       </div>
+      <div class="home-nav-card" onclick="showPage('statistiche')">
+        <div class="home-nav-card-icon">&#128200;</div>
+        <div class="home-nav-card-title">Statistiche</div>
+        <div class="home-nav-card-desc">Fatturato e utili mensili per azienda, confronto annuale</div>
+      </div>
+      <div class="home-nav-card" onclick="showPage('organigramma')">
+        <div class="home-nav-card-icon">&#127981;</div>
+        <div class="home-nav-card-title">Organigramma</div>
+        <div class="home-nav-card-desc">Struttura gerarchica dell'organizzazione, modificabile</div>
+      </div>
     </div>
   </div>
 </div>
@@ -2511,7 +2837,7 @@
       </div>
       <div class="stat-pill">
         <div class="stat-pill-value" id="stat-fatturato">0</div>
-        <div class="stat-pill-label">Fatturato Medio %</div>
+        <div class="stat-pill-label">Fatturato Medio % <span id="stat-fatturato-alert" class="stat-alert-badge" style="display:none;" title="Attenzione: una o pi&#249; aziende mostrano fatturato in calo per 2 mesi consecutivi rispetto all&#039;anno precedente">&#9888; Calo</span></div>
       </div>
       <div class="stat-pill">
         <div class="stat-pill-value" id="stat-paganti">0</div>
@@ -2785,6 +3111,165 @@
   </div>
 </div>
 
+<!-- ===== PAGE: STATISTICHE ===== -->
+<div class="page" id="page-statistiche">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-title">&#128200; Statistiche <span>Aziendali</span></div>
+        <div class="section-subtitle">Fatturato e utili mensili per azienda — confronto anno selezionato vs anno precedente</div>
+      </div>
+    </div>
+
+    <!-- Selettore Azienda -->
+    <div class="stat-az-selector-wrap">
+      <span class="stat-az-label">&#127970; Azienda</span>
+      <select class="stat-az-select" id="stat-az-select" onchange="onStatAziendaChange()">
+        <option value="">&#8212; Seleziona un&apos;azienda &#8212;</option>
+      </select>
+    </div>
+
+    <!-- Contenuto dinamico per azienda selezionata -->
+    <div id="stat-az-content" style="display:none;">
+
+      <!-- Selettore Anno (condiviso tra fatturato e utili) -->
+      <div class="stat-az-selector-wrap" style="margin-bottom:18px;">
+        <span class="stat-az-label">&#128197; Anno</span>
+        <select class="stat-az-select" id="stat-anno-select" style="min-width:120px;max-width:180px;flex:unset;" onchange="onStatAnnoChange()">
+        </select>
+        <div class="stat-anno-add-wrap" style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+          <input type="number" id="stat-nuovo-anno" min="2000" max="2100" placeholder="es. 2024"
+            style="background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:7px 12px;border-radius:7px;font-size:0.85rem;outline:none;width:110px;"
+            onkeydown="if(event.key==='Enter')aggiungiStatAnno()">
+          <button class="btn btn-outline" style="padding:7px 14px;font-size:0.8rem;white-space:nowrap;" onclick="aggiungiStatAnno()">+ Aggiungi anno</button>
+        </div>
+      </div>
+
+      <!-- ===== FATTURATO ===== -->
+      <div class="stat-sezione-card">
+        <div class="stat-sezione-title">&#128176; Fatturato Mensile</div>
+        <div class="stat-sezione-sub">Anno <strong id="stat-label-anno-fat">—</strong> (rosa nel grafico). Il grafico confronta con l&rsquo;anno precedente (oro) se disponibile.</div>
+
+        <div class="stat-incremento-box" id="stat-fat-incremento-box">
+          <span class="stat-incremento-label">Incremento vs anno precedente</span>
+          <span class="stat-incremento-val" id="stat-fat-incremento">—</span>
+        </div>
+
+        <div class="stat-mesi-grid" id="stat-fat-inputs"></div>
+
+        <div class="stat-chart-wrap">
+          <div class="stat-legenda">
+            <div class="stat-legenda-item">
+              <div class="stat-legenda-dot" style="background:#b3468d;"></div>
+              <span id="stat-legenda-ac-fat">Anno selezionato</span>
+            </div>
+            <div class="stat-legenda-item">
+              <div class="stat-legenda-dot" style="background:#d4a843;"></div>
+              <span id="stat-legenda-ap-fat">Anno precedente</span>
+            </div>
+          </div>
+          <canvas id="stat-fat-chart" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- ===== UTILI ===== -->
+      <div class="stat-sezione-card">
+        <div class="stat-sezione-title">&#128184; Utili Mensili</div>
+        <div class="stat-sezione-sub">Anno <strong id="stat-label-anno-utili">—</strong> (rosa nel grafico). Il grafico confronta con l&rsquo;anno precedente (oro) se disponibile.</div>
+
+        <div class="stat-incremento-box" id="stat-utili-incremento-box">
+          <span class="stat-incremento-label">Incremento vs anno precedente</span>
+          <span class="stat-incremento-val" id="stat-utili-incremento">—</span>
+        </div>
+
+        <div class="stat-mesi-grid" id="stat-utili-inputs"></div>
+
+        <div class="stat-chart-wrap">
+          <div class="stat-legenda">
+            <div class="stat-legenda-item">
+              <div class="stat-legenda-dot" style="background:#b3468d;"></div>
+              <span id="stat-legenda-ac-utili">Anno selezionato</span>
+            </div>
+            <div class="stat-legenda-item">
+              <div class="stat-legenda-dot" style="background:#d4a843;"></div>
+              <span id="stat-legenda-ap-utili">Anno precedente</span>
+            </div>
+          </div>
+          <canvas id="stat-utili-chart" height="200"></canvas>
+        </div>
+      </div>
+
+    </div><!-- /stat-az-content -->
+
+    <div id="stat-az-empty" class="empty-state" style="display:none;margin-top:32px;">
+      <div class="empty-state-icon">&#127970;</div>
+      <div class="empty-state-text">Nessuna azienda presente. Aggiungi partner e clienti nella sezione Clienti.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== PAGE: ORGANIGRAMMA ===== -->
+<div class="page" id="page-organigramma">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-title">&#127981; Organi<span>gramma</span></div>
+        <div class="section-subtitle">Struttura gerarchica dell&rsquo;organizzazione — modificabile</div>
+      </div>
+    </div>
+
+    <!-- Form aggiunta / modifica -->
+    <div class="stat-sezione-card" id="org-add-form">
+      <div class="stat-sezione-title" id="org-form-title">&#43; Aggiungi persona</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;align-items:flex-end;">
+
+        <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:150px;">
+          <label style="font-size:0.68rem;color:var(--testo-muted);text-transform:uppercase;letter-spacing:0.08em;">Nome</label>
+          <input type="text" id="org-input-nome" list="org-nomi-datalist" placeholder="Nome e cognome..."
+            style="background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:8px 12px;border-radius:7px;font-size:0.85rem;outline:none;transition:border-color 0.2s;"
+            onfocus="this.style.borderColor='var(--rosa)'" onblur="this.style.borderColor=''">
+          <datalist id="org-nomi-datalist"></datalist>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:150px;">
+          <label style="font-size:0.68rem;color:var(--testo-muted);text-transform:uppercase;letter-spacing:0.08em;">Ruolo / Titolo</label>
+          <input type="text" id="org-input-ruolo" placeholder="es. CEO, Dir. Marketing..."
+            style="background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:8px 12px;border-radius:7px;font-size:0.85rem;outline:none;transition:border-color 0.2s;"
+            onfocus="this.style.borderColor='var(--rosa)'" onblur="this.style.borderColor=''">
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:180px;">
+          <label style="font-size:0.68rem;color:var(--testo-muted);text-transform:uppercase;letter-spacing:0.08em;">Riporta a</label>
+          <select id="org-input-parent"
+            style="background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:8px 36px 8px 12px;border-radius:7px;font-size:0.85rem;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%2212%22 height%3D%228%22 viewBox%3D%220 0 12 8%22%3E%3Cpath d%3D%22M1 1l5 5 5-5%22 stroke%3D%22%23b3468d%22 stroke-width%3D%221.5%22 fill%3D%22none%22 stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;background-position:right 12px center;cursor:pointer;">
+            <option value="">&#8212; Vertice (nessun superiore) &#8212;</option>
+          </select>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <button class="btn btn-primary" id="org-btn-salva" onclick="salvaOrgNode()">Salva</button>
+          <button class="btn btn-outline" id="org-btn-annulla" style="display:none;" onclick="annullaEditOrg()">Annulla</button>
+        </div>
+
+      </div>
+      <input type="hidden" id="org-edit-id" value="">
+    </div>
+
+    <!-- Albero organigramma -->
+    <div class="stat-sezione-card" style="padding:16px 20px;">
+      <div class="stat-sezione-title">&#127981; Struttura</div>
+      <div class="org-tree-wrap" id="org-tree-wrap">
+        <div class="empty-state" id="org-empty" style="margin:0;">
+          <div class="empty-state-icon">&#127981;</div>
+          <div class="empty-state-text">Organigramma vuoto. Aggiungi la prima persona con il form qui sopra.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ===== PAGE: ADMIN ===== -->
 <div class="page" id="page-admin">
   <div class="admin-panel-wrap">
@@ -2933,6 +3418,8 @@ let state = {
   crescitaPerEdizione: {},
   regoleSconto: {},
   pmList: [],
+  statistiche: {},
+  organigramma: [],
   corsi: [
     'MBS - Sezione Gestione d\'Impresa',
     'MBS - Sezione Marketing',
@@ -2988,6 +3475,8 @@ async function load() {
   if (!state.crescitaPerEdizione) state.crescitaPerEdizione = {};
   if (!state.regoleSconto) state.regoleSconto = {};
   if (!state.pmList) state.pmList = [];
+  if (!state.statistiche) state.statistiche = {};
+  if (!state.organigramma) state.organigramma = [];
   // ===== MIGRAZIONE: presenzaG1/G2 tipoG1/G2 per doppia giornata =====
   state.iscritti.forEach(i => {
     if (i.presenzaG1 === undefined) { i.presenzaG1 = i.presenza || false; i.presenzaG2 = false; }
@@ -3046,9 +3535,9 @@ function formatEur(val) {
 
 // ===== NAVIGAZIONE =====
 const PAGINE_CONSENTITE = {
-  admin:     ['home','clienti','iscritti','firme','storico','report','disposizioni','fogliettini','debriefing','inventario','admin'],
-  pm:        ['home','clienti','iscritti','firme','storico','report','disposizioni','fogliettini','debriefing','inventario'],
-  consulente:['iscritti','storico']
+  admin:     ['home','clienti','iscritti','firme','storico','report','disposizioni','fogliettini','debriefing','inventario','statistiche','organigramma','admin'],
+  pm:        ['home','clienti','iscritti','firme','storico','report','disposizioni','fogliettini','debriefing','inventario','statistiche','organigramma'],
+  consulente:['iscritti','storico','statistiche','organigramma']
 };
 
 function showPage(name) {
@@ -3078,6 +3567,8 @@ function showPage(name) {
   if (name === 'fogliettini') renderFogliettini();
   if (name === 'debriefing') { syncDebriefing(); renderDebriefing(); }
   if (name === 'inventario') renderInventario();
+  if (name === 'statistiche') renderStatistiche();
+  if (name === 'organigramma') renderOrganigramma();
   if (name === 'admin') renderAdminPanel();
   window.scrollTo(0, 0);
 }
@@ -3659,6 +4150,9 @@ function updateStats(list) {
   const totFat = list.reduce((acc, i) => acc + (parseFloat(i.fatturato) || 0), 0);
   document.getElementById('stat-fatturato').textContent = totFat > 0 ? (totFat / list.filter(i => parseFloat(i.fatturato) > 0).length || 0).toFixed(1) + '% media' : '—';
   document.getElementById('stat-paganti').textContent = list.filter(i => i.tipo === 'Pagante').length;
+  // Alert calo fatturato (2 mesi consecutivi anno corrente < anno precedente in qualsiasi azienda)
+  const alertEl = document.getElementById('stat-fatturato-alert');
+  if (alertEl) alertEl.style.display = hasCaloFatturatoBimensile() ? '' : 'none';
 }
 
 
@@ -5950,6 +6444,380 @@ function aggiornaPosizioneRegola(aidx, idx, val) {
 </script>
 
 <script>
+// ===== STATISTICHE AZIENDALI =====
+
+const MESI_NOMI = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const MESI_NOMI_FULL = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                        'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+// Anno attualmente visualizzato nella pagina Statistiche (stringa es. "2026")
+let statAnnoSelezionato = String(new Date().getFullYear());
+
+/** Restituisce l'array 12 mesi (null se non inserito) per la tipologia/azienda/anno */
+function getStatMesi(tipo, nomeAz, anno) {
+  const st = state.statistiche || {};
+  if (!st[tipo]) return new Array(12).fill(null);
+  if (!st[tipo][nomeAz]) return new Array(12).fill(null);
+  const raw = st[tipo][nomeAz][String(anno)];
+  if (!Array.isArray(raw)) return new Array(12).fill(null);
+  const arr = new Array(12).fill(null);
+  for (let i = 0; i < 12; i++) {
+    arr[i] = (raw[i] !== undefined && raw[i] !== null && raw[i] !== '') ? parseFloat(raw[i]) : null;
+  }
+  return arr;
+}
+
+/** Salva il valore per tipologia/azienda/anno/mese e aggiorna la UI */
+function saveStatMese(tipo, nomeAz, anno, mese, valore) {
+  if (!state.statistiche) state.statistiche = {};
+  if (!state.statistiche[tipo]) state.statistiche[tipo] = {};
+  if (!state.statistiche[tipo][nomeAz]) state.statistiche[tipo][nomeAz] = {};
+  if (!Array.isArray(state.statistiche[tipo][nomeAz][String(anno)])) {
+    state.statistiche[tipo][nomeAz][String(anno)] = new Array(12).fill(null);
+  }
+  const v = (valore === '' || valore === null || isNaN(parseFloat(valore))) ? null : parseFloat(valore);
+  state.statistiche[tipo][nomeAz][String(anno)][mese] = v;
+  save();
+  aggiornaIncrementoStatUI(tipo, nomeAz);
+  disegnaGraficoStat(tipo, nomeAz);
+  // Aggiorna alert nella sezione iscritti
+  const alertEl = document.getElementById('stat-fatturato-alert');
+  if (alertEl) alertEl.style.display = hasCaloFatturatoBimensile() ? '' : 'none';
+}
+
+/** Calcola incremento % annuo: anno selezionato vs anno selezionato - 1 */
+function calcolaIncrementoAnnuo(tipo, nomeAz) {
+  const annoSel = parseInt(statAnnoSelezionato);
+  const annoPrev = annoSel - 1;
+  const mesiSel = getStatMesi(tipo, nomeAz, annoSel);
+  const mesiPrev = getStatMesi(tipo, nomeAz, annoPrev);
+  let totSel = 0, totPrev = 0, nMesi = 0;
+  for (let m = 0; m < 12; m++) {
+    if (mesiSel[m] !== null && mesiPrev[m] !== null) {
+      totSel += mesiSel[m];
+      totPrev += mesiPrev[m];
+      nMesi++;
+    }
+  }
+  if (nMesi === 0 || totPrev === 0) return null;
+  return ((totSel - totPrev) / totPrev) * 100;
+}
+
+/** Aggiorna il box incremento nella UI */
+function aggiornaIncrementoStatUI(tipo, nomeAz) {
+  const elId = tipo === 'fatturato' ? 'stat-fat-incremento' : 'stat-utili-incremento';
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const inc = calcolaIncrementoAnnuo(tipo, nomeAz);
+  if (inc === null) {
+    el.textContent = '—';
+    el.className = 'stat-incremento-val';
+  } else {
+    const segno = inc >= 0 ? '+' : '';
+    el.textContent = segno + inc.toFixed(1) + '%';
+    el.className = 'stat-incremento-val ' + (inc >= 0 ? 'positivo' : 'negativo');
+  }
+}
+
+/**
+ * Verifica se esiste almeno un'azienda con 2 mesi consecutivi in cui
+ * il fatturato dell'anno corrente (calendario) è inferiore all'anno precedente.
+ * Usa sempre l'anno solare reale (non l'anno selezionato nell'UI).
+ */
+function hasCaloFatturatoBimensile() {
+  const annoReale = new Date().getFullYear();
+  const annoPrev  = annoReale - 1;
+  const st = state.statistiche || {};
+  const fat = st.fatturato || {};
+  for (const nomeAz of Object.keys(fat)) {
+    const mesiAC = getStatMesi('fatturato', nomeAz, annoReale);
+    const mesiAP = getStatMesi('fatturato', nomeAz, annoPrev);
+    let consec = 0;
+    for (let m = 0; m < 12; m++) {
+      if (mesiAC[m] !== null && mesiAP[m] !== null && mesiAC[m] < mesiAP[m]) {
+        consec++;
+        if (consec >= 2) return true;
+      } else {
+        consec = 0;
+      }
+    }
+  }
+  return false;
+}
+
+/** Disegna il grafico canvas per tipo e azienda — confronto anno selezionato vs anno precedente */
+function disegnaGraficoStat(tipo, nomeAz) {
+  const canvasId = tipo === 'fatturato' ? 'stat-fat-chart' : 'stat-utili-chart';
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const annoSel  = parseInt(statAnnoSelezionato);
+  const annoPrev = annoSel - 1;
+  const mesiSel  = getStatMesi(tipo, nomeAz, annoSel);
+  const mesiPrev = getStatMesi(tipo, nomeAz, annoPrev);
+
+  const W = Math.max(canvas.parentElement.clientWidth - 36, 300);
+  const H = 200;
+  canvas.width = W;
+  canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+
+  const haDatiSel  = mesiSel.some(v => v !== null);
+  const haDatiPrev = mesiPrev.some(v => v !== null);
+  if (!haDatiSel && !haDatiPrev) {
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '12px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Inserisci i dati per visualizzare il grafico.', W / 2, H / 2);
+    return;
+  }
+
+  const pL = 56, pR = 16, pT = 20, pB = 36;
+  const cW = W - pL - pR;
+  const cH = H - pT - pB;
+
+  const tuttiValori = [...mesiSel, ...mesiPrev].filter(v => v !== null);
+  const maxV = tuttiValori.length > 0 ? Math.max(...tuttiValori) : 1000;
+  const minV = Math.min(0, tuttiValori.length > 0 ? Math.min(...tuttiValori) : 0);
+  const range = maxV - minV || 1;
+
+  // Griglia
+  for (let i = 0; i <= 5; i++) {
+    const val = minV + (range / 5) * i;
+    const y = pT + cH - ((val - minV) / range) * cH;
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pL, y); ctx.lineTo(W - pR, y); ctx.stroke();
+    ctx.fillStyle = '#8fa8b8';
+    ctx.font = '9px Segoe UI, sans-serif';
+    ctx.textAlign = 'right';
+    const lbl = val >= 1000000 ? (val/1000000).toFixed(1)+'M' : val >= 1000 ? (val/1000).toFixed(0)+'k' : val.toFixed(0);
+    ctx.fillText(lbl, pL - 4, y + 3);
+  }
+
+  const stepX = cW / 11;
+
+  function disegnaLinea(mesi, colore) {
+    ctx.strokeStyle = colore;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    let started = false;
+    ctx.beginPath();
+    for (let m = 0; m < 12; m++) {
+      if (mesi[m] === null) { started = false; continue; }
+      const x = pL + m * stepX;
+      const y = pT + cH - ((mesi[m] - minV) / range) * cH;
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else { ctx.lineTo(x, y); }
+    }
+    ctx.stroke();
+    for (let m = 0; m < 12; m++) {
+      if (mesi[m] === null) continue;
+      const x = pL + m * stepX;
+      const y = pT + cH - ((mesi[m] - minV) / range) * cH;
+      ctx.fillStyle = colore;
+      ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  if (haDatiPrev) disegnaLinea(mesiPrev, '#d4a843');
+  disegnaLinea(mesiSel, '#b3468d');
+
+  ctx.fillStyle = '#8fa8b8';
+  ctx.font = '9px Segoe UI, sans-serif';
+  ctx.textAlign = 'center';
+  for (let m = 0; m < 12; m++) {
+    ctx.fillText(MESI_NOMI[m], pL + m * stepX, H - 8);
+  }
+}
+
+/** Renderizza gli input mesi per l'anno selezionato (singola colonna) */
+function renderStatInputs(tipo, nomeAz) {
+  const containerId = tipo === 'fatturato' ? 'stat-fat-inputs' : 'stat-utili-inputs';
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const annoSel = parseInt(statAnnoSelezionato);
+  const mesi = getStatMesi(tipo, nomeAz, annoSel);
+
+  container.innerHTML = '';
+  for (let m = 0; m < 12; m++) {
+    const item = document.createElement('div');
+    item.className = 'stat-mese-item';
+
+    const label = document.createElement('div');
+    label.className = 'stat-mese-label';
+    label.textContent = MESI_NOMI_FULL[m];
+    item.appendChild(label);
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.step = '1';
+    input.placeholder = '—';
+    input.className = 'stat-mese-input anno-corrente';
+    input.value = mesi[m] !== null ? mesi[m] : '';
+    input.title = MESI_NOMI_FULL[m] + ' ' + annoSel;
+    input.addEventListener('change', function() {
+      saveStatMese(tipo, nomeAz, annoSel, m, this.value);
+    });
+    item.appendChild(input);
+
+    container.appendChild(item);
+  }
+}
+
+/** Restituisce tutti gli anni con dati per un'azienda (su tutti i tipi) + anno corrente */
+function getAnniDisponibili(nomeAz) {
+  const annoCorrente = new Date().getFullYear();
+  const set = new Set([String(annoCorrente)]);
+  const st = state.statistiche || {};
+  ['fatturato','utili'].forEach(tipo => {
+    if (st[tipo] && st[tipo][nomeAz]) {
+      Object.keys(st[tipo][nomeAz]).forEach(a => set.add(a));
+    }
+  });
+  return [...set].map(Number).sort((a, b) => b - a).map(String); // decrescente
+}
+
+/** Popola il selettore anno in base all'azienda corrente */
+function popolaSelectAnni(nomeAz) {
+  const sel = document.getElementById('stat-anno-select');
+  if (!sel) return;
+  const anni = getAnniDisponibili(nomeAz);
+  // Mantieni selezione se possibile, altrimenti anno corrente
+  let current = statAnnoSelezionato;
+  if (!anni.includes(current)) current = String(new Date().getFullYear());
+  statAnnoSelezionato = current;
+  sel.innerHTML = '';
+  anni.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = a;
+    if (a === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+/** Handler cambio anno nel selettore */
+function onStatAnnoChange() {
+  const sel = document.getElementById('stat-anno-select');
+  if (!sel || !sel.value) return;
+  statAnnoSelezionato = sel.value;
+  const azSel = document.getElementById('stat-az-select');
+  const nomeAz = azSel ? azSel.value : '';
+  if (!nomeAz) return;
+  _aggiornaContenutoStatistiche(nomeAz);
+}
+
+/** Aggiunge un anno personalizzato al selettore */
+function aggiungiStatAnno() {
+  const inp = document.getElementById('stat-nuovo-anno');
+  if (!inp) return;
+  const val = parseInt(inp.value);
+  if (isNaN(val) || val < 2000 || val > 2100) {
+    toast('Inserisci un anno valido (es. 2023)');
+    return;
+  }
+  inp.value = '';
+  statAnnoSelezionato = String(val);
+  const azSel = document.getElementById('stat-az-select');
+  const nomeAz = azSel ? azSel.value : '';
+  if (!nomeAz) return;
+  // Garantisce che l'anno esista nella struttura dati (anche vuoto)
+  if (!state.statistiche) state.statistiche = {};
+  ['fatturato','utili'].forEach(tipo => {
+    if (!state.statistiche[tipo]) state.statistiche[tipo] = {};
+    if (!state.statistiche[tipo][nomeAz]) state.statistiche[tipo][nomeAz] = {};
+    if (!Array.isArray(state.statistiche[tipo][nomeAz][String(val)])) {
+      state.statistiche[tipo][nomeAz][String(val)] = new Array(12).fill(null);
+    }
+  });
+  save();
+  popolaSelectAnni(nomeAz);
+  _aggiornaContenutoStatistiche(nomeAz);
+  toast('Anno ' + val + ' aggiunto');
+}
+
+/** Aggiorna labels, input e grafici per l'azienda e l'anno correntemente selezionati */
+function _aggiornaContenutoStatistiche(nomeAz) {
+  const annoSel  = parseInt(statAnnoSelezionato);
+  const annoPrev = annoSel - 1;
+
+  // Aggiorna label titolo e legenda
+  ['stat-label-anno-fat','stat-label-anno-utili'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = annoSel;
+  });
+  ['stat-legenda-ac-fat','stat-legenda-ac-utili'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = annoSel;
+  });
+  ['stat-legenda-ap-fat','stat-legenda-ap-utili'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = annoPrev + ' (confronto)';
+  });
+
+  renderStatInputs('fatturato', nomeAz);
+  renderStatInputs('utili', nomeAz);
+  aggiornaIncrementoStatUI('fatturato', nomeAz);
+  aggiornaIncrementoStatUI('utili', nomeAz);
+  disegnaGraficoStat('fatturato', nomeAz);
+  disegnaGraficoStat('utili', nomeAz);
+}
+
+/** Restituisce l'elenco di tutti i nomi azienda unici dallo state.partners */
+function getAllAziende() {
+  const set = new Set();
+  (state.partners || []).forEach(p => {
+    (p.consulenti || []).forEach(c => {
+      (c.aziende || []).forEach(az => {
+        if (az.name) set.add(az.name);
+      });
+    });
+  });
+  return [...set].sort();
+}
+
+/** Aggiorna il selettore azienda */
+function popolaSelectAziende() {
+  const sel = document.getElementById('stat-az-select');
+  if (!sel) return;
+  const current = sel.value;
+  const aziende = getAllAziende();
+  sel.innerHTML = '<option value="">&#8212; Seleziona un\'azienda &#8212;</option>';
+  aziende.forEach(az => {
+    const opt = document.createElement('option');
+    opt.value = az;
+    opt.textContent = az;
+    if (az === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  const emptyEl = document.getElementById('stat-az-empty');
+  if (emptyEl) emptyEl.style.display = aziende.length === 0 ? '' : 'none';
+}
+
+/** Handler cambio azienda */
+function onStatAziendaChange() {
+  const sel = document.getElementById('stat-az-select');
+  const nomeAz = sel ? sel.value : '';
+  const content = document.getElementById('stat-az-content');
+  if (!content) return;
+  if (!nomeAz) { content.style.display = 'none'; return; }
+  content.style.display = '';
+  popolaSelectAnni(nomeAz);
+  _aggiornaContenutoStatistiche(nomeAz);
+}
+
+/** Render principale della pagina statistiche */
+function renderStatistiche() {
+  popolaSelectAziende();
+  const sel = document.getElementById('stat-az-select');
+  const nomeAz = sel ? sel.value : '';
+  const content = document.getElementById('stat-az-content');
+  if (content) content.style.display = nomeAz ? '' : 'none';
+  if (nomeAz) {
+    popolaSelectAnni(nomeAz);
+    _aggiornaContenutoStatistiche(nomeAz);
+  }
+}
+
 // ===== GESTIONE PROJECT MANAGER =====
 function pmOptionsHtml(selected) {
   const list = state.pmList || [];
