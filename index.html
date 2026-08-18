@@ -2503,6 +2503,53 @@
     flex-shrink: 0;
   }
 
+  /* Filtro anni — checkboxes sopra il grafico */
+  .stat-anni-filtro {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    padding: 4px 2px 10px;
+    min-height: 26px;
+  }
+  .stat-anni-filtro label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.9;
+    transition: opacity 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .stat-anni-filtro label:hover { opacity: 1; }
+  .stat-anni-filtro input[type="checkbox"] {
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+    accent-color: var(--rosa);
+    flex-shrink: 0;
+  }
+  /* Tooltip grafico */
+  .stat-tooltip {
+    position: fixed;
+    background: rgba(8,18,32,0.97);
+    color: #dce9f4;
+    font-size: 0.79rem;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 7px;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+    border: 1px solid rgba(179,70,141,0.55);
+    display: none;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  body.ruolo-consulente .stat-anni-filtro { pointer-events: none; }
+
   /* ===== GRAFICO % FATTURATO IN CRESCITA — STORICO ===== */
   .crescita-chart-wrap {
     background: var(--card-bg);
@@ -3148,7 +3195,7 @@
       <!-- ===== FATTURATO ===== -->
       <div class="stat-sezione-card">
         <div class="stat-sezione-title">&#128176; Fatturato Mensile</div>
-        <div class="stat-sezione-sub">Anno <strong id="stat-label-anno-fat">—</strong> (rosa nel grafico). Il grafico confronta con l&rsquo;anno precedente (oro) se disponibile.</div>
+        <div class="stat-sezione-sub">Inserisci i dati per l&rsquo;anno selezionato sopra. Il grafico mostra tutti gli anni disponibili insieme.</div>
 
         <div class="stat-incremento-box" id="stat-fat-incremento-box">
           <span class="stat-incremento-label">Incremento vs anno precedente</span>
@@ -3158,24 +3205,15 @@
         <div class="stat-mesi-grid" id="stat-fat-inputs"></div>
 
         <div class="stat-chart-wrap">
-          <div class="stat-legenda">
-            <div class="stat-legenda-item">
-              <div class="stat-legenda-dot" style="background:#b3468d;"></div>
-              <span id="stat-legenda-ac-fat">Anno selezionato</span>
-            </div>
-            <div class="stat-legenda-item">
-              <div class="stat-legenda-dot" style="background:#d4a843;"></div>
-              <span id="stat-legenda-ap-fat">Anno precedente</span>
-            </div>
-          </div>
-          <canvas id="stat-fat-chart" height="200"></canvas>
+          <div id="stat-fat-anni-filtro" class="stat-anni-filtro"></div>
+          <canvas id="stat-fat-chart" height="200" style="cursor:crosshair;"></canvas>
         </div>
       </div>
 
       <!-- ===== UTILI ===== -->
       <div class="stat-sezione-card">
         <div class="stat-sezione-title">&#128184; Utili Mensili</div>
-        <div class="stat-sezione-sub">Anno <strong id="stat-label-anno-utili">—</strong> (rosa nel grafico). Il grafico confronta con l&rsquo;anno precedente (oro) se disponibile.</div>
+        <div class="stat-sezione-sub">Inserisci i dati per l&rsquo;anno selezionato sopra. Il grafico mostra tutti gli anni disponibili insieme.</div>
 
         <div class="stat-incremento-box" id="stat-utili-incremento-box">
           <span class="stat-incremento-label">Incremento vs anno precedente</span>
@@ -3185,21 +3223,15 @@
         <div class="stat-mesi-grid" id="stat-utili-inputs"></div>
 
         <div class="stat-chart-wrap">
-          <div class="stat-legenda">
-            <div class="stat-legenda-item">
-              <div class="stat-legenda-dot" style="background:#b3468d;"></div>
-              <span id="stat-legenda-ac-utili">Anno selezionato</span>
-            </div>
-            <div class="stat-legenda-item">
-              <div class="stat-legenda-dot" style="background:#d4a843;"></div>
-              <span id="stat-legenda-ap-utili">Anno precedente</span>
-            </div>
-          </div>
-          <canvas id="stat-utili-chart" height="200"></canvas>
+          <div id="stat-utili-anni-filtro" class="stat-anni-filtro"></div>
+          <canvas id="stat-utili-chart" height="200" style="cursor:crosshair;"></canvas>
         </div>
       </div>
 
     </div><!-- /stat-az-content -->
+
+    <!-- Tooltip grafico — posizionato fixed, visibile su entrambi i canvas -->
+    <div id="stat-tooltip" class="stat-tooltip"></div>
 
     <div id="stat-az-empty" class="empty-state" style="display:none;margin-top:32px;">
       <div class="empty-state-icon">&#127970;</div>
@@ -6453,6 +6485,14 @@ const MESI_NOMI_FULL = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
 // Anno attualmente visualizzato nella pagina Statistiche (stringa es. "2026")
 let statAnnoSelezionato = String(new Date().getFullYear());
 
+// Visibilità anni per tipo: { "fatturato|NomeAz": { "2024": true, "2025": false, ... } }
+// Non persiste su Firestore — solo in memoria per sessione corrente
+let statAnniVisibili = {};
+
+// Punti canvas dell'ultimo render per il tooltip (coordinate pixel)
+// { fatturato: [ {anno, colore, pts:[{x,y,m,v}]} ], utili: [...] }
+let statTooltipPts = { fatturato: [], utili: [] };
+
 /** Restituisce l'array 12 mesi (null se non inserito) per la tipologia/azienda/anno */
 function getStatMesi(tipo, nomeAz, anno) {
   const st = state.statistiche || {};
@@ -6479,6 +6519,7 @@ function saveStatMese(tipo, nomeAz, anno, mese, valore) {
   state.statistiche[tipo][nomeAz][String(anno)][mese] = v;
   save();
   aggiornaIncrementoStatUI(tipo, nomeAz);
+  renderFiltroAnni(tipo, nomeAz);   // aggiorna checkbox (potrebbe apparire un anno nuovo)
   disegnaGraficoStat(tipo, nomeAz);
   // Aggiorna alert nella sezione iscritti
   const alertEl = document.getElementById('stat-fatturato-alert');
@@ -6545,16 +6586,37 @@ function hasCaloFatturatoBimensile() {
   return false;
 }
 
-/** Disegna il grafico canvas per tipo e azienda — confronto anno selezionato vs anno precedente */
+/**
+ * Disegna il grafico canvas per tipo e azienda.
+ * Mostra tutti gli anni filtrati dalla checkbox per quell'azienda (curva Catmull-Rom).
+ * Attacca i listener mousemove/mouseleave per il tooltip.
+ */
 function disegnaGraficoStat(tipo, nomeAz) {
   const canvasId = tipo === 'fatturato' ? 'stat-fat-chart' : 'stat-utili-chart';
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const annoSel  = parseInt(statAnnoSelezionato);
-  const annoPrev = annoSel - 1;
-  const mesiSel  = getStatMesi(tipo, nomeAz, annoSel);
-  const mesiPrev = getStatMesi(tipo, nomeAz, annoPrev);
+
+  // Palette colori stabile: ordine ascendente anno → colore fisso
+  const PALETTE = ['#d4a843','#4a9fd4','#43c47b','#e05555','#8b6fd4','#43c4c4','#d47843','#b3468d'];
+  const anniAsc = getAnniDisponibili(nomeAz).slice().reverse(); // crescente
+
+  // Tutte le serie con dati (per assegnare i colori in modo stabile)
+  const visKey = tipo + '|' + nomeAz;
+  const vis = statAnniVisibili[visKey] || {};
+
+  const serieTutte = [];
+  anniAsc.forEach(function(anno, idx) {
+    const mesi = getStatMesi(tipo, nomeAz, parseInt(anno));
+    const pts = [];
+    mesi.forEach(function(v, m) { if (v !== null) pts.push({ m: m, v: v }); });
+    if (pts.length > 0) {
+      serieTutte.push({ anno: anno, colore: PALETTE[idx % PALETTE.length], pts: pts });
+    }
+  });
+
+  // Filtra per visibilità (checkbox)
+  const serie = serieTutte.filter(function(s) { return vis[s.anno] !== false; });
 
   const W = Math.max(canvas.parentElement.clientWidth - 36, 300);
   const H = 200;
@@ -6562,73 +6624,141 @@ function disegnaGraficoStat(tipo, nomeAz) {
   canvas.height = H;
   ctx.clearRect(0, 0, W, H);
 
-  const haDatiSel  = mesiSel.some(v => v !== null);
-  const haDatiPrev = mesiPrev.some(v => v !== null);
-  if (!haDatiSel && !haDatiPrev) {
+  if (serieTutte.length === 0) {
     ctx.fillStyle = '#8fa8b8';
     ctx.font = '12px Segoe UI, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Inserisci i dati per visualizzare il grafico.', W / 2, H / 2);
+    statTooltipPts[tipo] = [];
     return;
   }
 
   const pL = 56, pR = 16, pT = 20, pB = 36;
   const cW = W - pL - pR;
   const cH = H - pT - pB;
+  const stepX = cW / 11;
 
-  const tuttiValori = [...mesiSel, ...mesiPrev].filter(v => v !== null);
-  const maxV = tuttiValori.length > 0 ? Math.max(...tuttiValori) : 1000;
-  const minV = Math.min(0, tuttiValori.length > 0 ? Math.min(...tuttiValori) : 0);
+  // Range calcolato su TUTTE le serie (anche quelle nascoste) per asse Y stabile
+  const tuttiValori = serieTutte.reduce(function(acc, s) {
+    return acc.concat(s.pts.map(function(p) { return p.v; }));
+  }, []);
+  const maxV = Math.max.apply(null, tuttiValori);
+  const minV = Math.min(0, Math.min.apply(null, tuttiValori));
   const range = maxV - minV || 1;
 
-  // Griglia
+  function valToY(v) { return pT + cH - ((v - minV) / range) * cH; }
+  function mToX(m)   { return pL + m * stepX; }
+
+  // Griglia orizzontale
   for (let i = 0; i <= 5; i++) {
     const val = minV + (range / 5) * i;
-    const y = pT + cH - ((val - minV) / range) * cH;
+    const y = valToY(val);
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(pL, y); ctx.lineTo(W - pR, y); ctx.stroke();
     ctx.fillStyle = '#8fa8b8';
     ctx.font = '9px Segoe UI, sans-serif';
     ctx.textAlign = 'right';
-    const lbl = val >= 1000000 ? (val/1000000).toFixed(1)+'M' : val >= 1000 ? (val/1000).toFixed(0)+'k' : val.toFixed(0);
+    const lbl = val >= 1000000 ? (val/1000000).toFixed(1)+'M'
+              : val >= 1000    ? (val/1000).toFixed(0)+'k'
+              : val.toFixed(0);
     ctx.fillText(lbl, pL - 4, y + 3);
   }
 
-  const stepX = cW / 11;
-
-  function disegnaLinea(mesi, colore) {
-    ctx.strokeStyle = colore;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([]);
-    let started = false;
-    ctx.beginPath();
-    for (let m = 0; m < 12; m++) {
-      if (mesi[m] === null) { started = false; continue; }
-      const x = pL + m * stepX;
-      const y = pT + cH - ((mesi[m] - minV) / range) * cH;
-      if (!started) { ctx.moveTo(x, y); started = true; }
-      else { ctx.lineTo(x, y); }
-    }
-    ctx.stroke();
-    for (let m = 0; m < 12; m++) {
-      if (mesi[m] === null) continue;
-      const x = pL + m * stepX;
-      const y = pT + cH - ((mesi[m] - minV) / range) * cH;
-      ctx.fillStyle = colore;
-      ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-
-  if (haDatiPrev) disegnaLinea(mesiPrev, '#d4a843');
-  disegnaLinea(mesiSel, '#b3468d');
-
+  // Etichette mesi
   ctx.fillStyle = '#8fa8b8';
   ctx.font = '9px Segoe UI, sans-serif';
   ctx.textAlign = 'center';
   for (let m = 0; m < 12; m++) {
-    ctx.fillText(MESI_NOMI[m], pL + m * stepX, H - 8);
+    ctx.fillText(MESI_NOMI[m], mToX(m), H - 8);
   }
+
+  // Accumula punti per il tooltip (solo serie visibili)
+  const tooltipSerie = [];
+
+  // Disegna ogni serie visibile con curva Catmull-Rom → cubic Bézier
+  serie.forEach(function(s) {
+    const pts2D = s.pts.map(function(p) { return { x: mToX(p.m), y: valToY(p.v), m: p.m, v: p.v }; });
+    const n = pts2D.length;
+
+    // Salva per tooltip
+    tooltipSerie.push({ anno: s.anno, colore: s.colore, pts: pts2D });
+
+    ctx.strokeStyle = s.colore;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(pts2D[0].x, pts2D[0].y);
+
+    for (let i = 0; i < n - 1; i++) {
+      const p0 = pts2D[Math.max(i - 1, 0)];
+      const p1 = pts2D[i];
+      const p2 = pts2D[i + 1];
+      const p3 = pts2D[Math.min(i + 2, n - 1)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+    }
+    ctx.stroke();
+
+    // Dot sui valori reali
+    pts2D.forEach(function(pt) {
+      ctx.fillStyle = s.colore;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+
+  // Aggiorna dati tooltip per questo tipo
+  statTooltipPts[tipo] = tooltipSerie;
+
+  // ---- Listener tooltip ----
+  const tooltip = document.getElementById('stat-tooltip');
+
+  canvas.onmousemove = function(e) {
+    if (!tooltip) return;
+    const rect = canvas.getBoundingClientRect();
+    // Scala tra dimensioni CSS e pixel canvas
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top)  * scaleY;
+
+    let minDist = 18, best = null;  // soglia 18px
+    statTooltipPts[tipo].forEach(function(s) {
+      s.pts.forEach(function(p) {
+        const d = Math.sqrt((p.x - mx) * (p.x - mx) + (p.y - my) * (p.y - my));
+        if (d < minDist) { minDist = d; best = { m: p.m, v: p.v, anno: s.anno, colore: s.colore }; }
+      });
+    });
+
+    if (best) {
+      const vFmt = best.v >= 1000000 ? (best.v / 1000000).toFixed(2) + ' M'
+                 : best.v >= 1000    ? (best.v / 1000).toFixed(1) + 'k'
+                 : best.v.toFixed(0);
+      tooltip.textContent = MESI_NOMI_FULL[best.m] + ' ' + best.anno + ': ' + vFmt;
+      tooltip.style.borderColor = best.colore;
+      tooltip.style.display = 'block';
+      // Posiziona vicino al cursore (fixed)
+      const tW = tooltip.offsetWidth  || 140;
+      const tH = tooltip.offsetHeight || 28;
+      let tx = e.clientX + 14;
+      let ty = e.clientY - tH - 6;
+      if (tx + tW > window.innerWidth  - 8) tx = e.clientX - tW - 10;
+      if (ty < 8) ty = e.clientY + 12;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top  = ty + 'px';
+    } else {
+      tooltip.style.display = 'none';
+    }
+  };
+
+  canvas.onmouseleave = function() {
+    if (tooltip) tooltip.style.display = 'none';
+  };
 }
 
 /** Renderizza gli input mesi per l'anno selezionato (singola colonna) */
@@ -6738,26 +6868,69 @@ function aggiungiStatAnno() {
   toast('Anno ' + val + ' aggiunto');
 }
 
-/** Aggiorna labels, input e grafici per l'azienda e l'anno correntemente selezionati */
+/**
+ * Popola i filtri-checkbox anni per un tipo e un'azienda.
+ * Deve essere chiamata PRIMA di disegnaGraficoStat per aggiornare statAnniVisibili.
+ */
+function renderFiltroAnni(tipo, nomeAz) {
+  const divId  = tipo === 'fatturato' ? 'stat-fat-anni-filtro' : 'stat-utili-anni-filtro';
+  const div    = document.getElementById(divId);
+  if (!div) return;
+
+  const PALETTE = ['#d4a843','#4a9fd4','#43c47b','#e05555','#8b6fd4','#43c4c4','#d47843','#b3468d'];
+  const anniAsc = getAnniDisponibili(nomeAz).slice().reverse(); // crescente
+  const visKey  = tipo + '|' + nomeAz;
+
+  // Inizializza visibilità per anni non ancora noti
+  if (!statAnniVisibili[visKey]) statAnniVisibili[visKey] = {};
+  anniAsc.forEach(function(a) {
+    if (statAnniVisibili[visKey][a] === undefined) statAnniVisibili[visKey][a] = true;
+  });
+
+  div.innerHTML = '';
+
+  // Mostra anni per cui ci sono effettivamente dati in questo tipo
+  anniAsc.forEach(function(anno, idx) {
+    const mesi = getStatMesi(tipo, nomeAz, parseInt(anno));
+    if (!mesi.some(function(v) { return v !== null; })) return; // nessun dato, skip
+
+    const colore = PALETTE[idx % PALETTE.length];
+    const label  = document.createElement('label');
+    label.style.color = colore;
+
+    const chk = document.createElement('input');
+    chk.type    = 'checkbox';
+    chk.checked = statAnniVisibili[visKey][anno] !== false;
+    chk.addEventListener('change', (function(a) {
+      return function() {
+        statAnniVisibili[visKey][a] = chk.checked;
+        disegnaGraficoStat(tipo, nomeAz);
+      };
+    }(anno)));
+
+    const span = document.createElement('span');
+    span.textContent = anno;
+
+    // Piccolo segmento colorato
+    const lineEl = document.createElement('span');
+    lineEl.style.cssText = 'display:inline-block;width:18px;height:2px;background:' + colore + ';border-radius:2px;flex-shrink:0;';
+
+    label.appendChild(chk);
+    label.appendChild(lineEl);
+    label.appendChild(span);
+    div.appendChild(label);
+  });
+}
+
+/** Aggiorna labels, input, filtri e grafici per l'azienda e l'anno correntemente selezionati */
 function _aggiornaContenutoStatistiche(nomeAz) {
-  const annoSel  = parseInt(statAnnoSelezionato);
-  const annoPrev = annoSel - 1;
-
-  // Aggiorna label titolo e legenda
-  ['stat-label-anno-fat','stat-label-anno-utili'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = annoSel;
-  });
-  ['stat-legenda-ac-fat','stat-legenda-ac-utili'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = annoSel;
-  });
-  ['stat-legenda-ap-fat','stat-legenda-ap-utili'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = annoPrev + ' (confronto)';
-  });
-
   renderStatInputs('fatturato', nomeAz);
   renderStatInputs('utili', nomeAz);
   aggiornaIncrementoStatUI('fatturato', nomeAz);
   aggiornaIncrementoStatUI('utili', nomeAz);
+  // renderFiltroAnni PRIMA di disegnaGraficoStat (aggiorna statAnniVisibili)
+  renderFiltroAnni('fatturato', nomeAz);
+  renderFiltroAnni('utili', nomeAz);
   disegnaGraficoStat('fatturato', nomeAz);
   disegnaGraficoStat('utili', nomeAz);
 }
@@ -7193,6 +7366,201 @@ function _showAuthAlert(id, show, msg) {
 
 function _authUid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+</script>
+
+<script>
+// ===== ORGANIGRAMMA =====
+
+function getOrganigramma() {
+  if (!Array.isArray(state.organigramma)) state.organigramma = [];
+  return state.organigramma;
+}
+
+/** Raccoglie nomi suggeriti dal portale (PM, consulenti, persone aziende) */
+function getOrgNomiSuggeriti() {
+  const nomi = new Set();
+  (state.pmList || []).forEach(pm => { if (pm) nomi.add(pm); });
+  (state.partners || []).forEach(p => {
+    (p.consulenti || []).forEach(c => {
+      if (c.name) nomi.add(c.name);
+      (c.aziende || []).forEach(az => {
+        (az.persone || []).forEach(pers => {
+          const n = ((pers.nome || '') + ' ' + (pers.cognome || '')).trim();
+          if (n) nomi.add(n);
+        });
+      });
+    });
+  });
+  return [...nomi].sort();
+}
+
+/** Popola datalist nomi e select "Riporta a" (escludi il nodo in modifica) */
+function popolaOrgForm(escludi) {
+  const dl = document.getElementById('org-nomi-datalist');
+  if (dl) {
+    dl.innerHTML = '';
+    getOrgNomiSuggeriti().forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      dl.appendChild(opt);
+    });
+  }
+  const sel = document.getElementById('org-input-parent');
+  if (!sel) return;
+  const prevVal = sel.value;
+  const nodes = getOrganigramma();
+  sel.innerHTML = '<option value="">— Vertice (nessun superiore) —</option>';
+  nodes
+    .filter(n => n.id !== escludi && !isDescendenteOrg(nodes, escludi, n.id))
+    .forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n.id;
+      opt.textContent = (n.nome || '—') + (n.ruolo ? '  [' + n.ruolo + ']' : '');
+      if (n.id === prevVal) opt.selected = true;
+      sel.appendChild(opt);
+    });
+}
+
+/** Verifica se candidatoId è discendente di nodeId (per prevenire cicli) */
+function isDescendenteOrg(nodes, nodeId, candidatoId) {
+  if (!nodeId || !candidatoId) return false;
+  if (candidatoId === nodeId) return true;
+  const figli = nodes.filter(n => n.parentId === nodeId);
+  return figli.some(f => isDescendenteOrg(nodes, f.id, candidatoId));
+}
+
+/** Costruisce l'HTML dell'albero ricorsivamente */
+function buildOrgTreeHTML(nodes, parentId, isRoot) {
+  const children = nodes.filter(n => (n.parentId || null) === (parentId || null));
+  if (children.length === 0) return '';
+  let html = '<ul class="org-ul' + (isRoot ? ' org-root' : '') + '">';
+  children.forEach(function(node) {
+    const hasChildren = nodes.some(n => n.parentId === node.id);
+    const nomeEsc   = (node.nome  || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const ruoloEsc  = (node.ruolo || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const idEsc     = (node.id   || '').replace(/'/g,"\\'");
+    html += '<li>';
+    html += '<div class="org-node-box" id="orgnode-' + node.id + '">';
+    html += '<div class="org-node-nome">'  + nomeEsc  + '</div>';
+    html += '<div class="org-node-ruolo">' + (ruoloEsc || '&mdash;') + '</div>';
+    html += '<div class="org-node-btns">';
+    html += '<button class="org-btn-edit" onclick="openEditOrgNode(\'' + idEsc + '\')" title="Modifica">&#9998;</button>';
+    html += '<button class="org-btn-del"  onclick="deleteOrgNode(\''  + idEsc + '\')" title="Rimuovi">&#215;</button>';
+    html += '</div>';
+    html += '</div>';
+    if (hasChildren) html += buildOrgTreeHTML(nodes, node.id, false);
+    html += '</li>';
+  });
+  html += '</ul>';
+  return html;
+}
+
+/** Render principale della pagina organigramma */
+function renderOrganigramma() {
+  popolaOrgForm(null);
+  const wrap = document.getElementById('org-tree-wrap');
+  if (!wrap) return;
+  const nodes = getOrganigramma();
+  if (nodes.length === 0) {
+    wrap.innerHTML = '<div class="empty-state" style="margin:0;"><div class="empty-state-icon">&#127981;</div><div class="empty-state-text">Organigramma vuoto. Aggiungi la prima persona con il form qui sopra.</div></div>';
+    return;
+  }
+  wrap.innerHTML = buildOrgTreeHTML(nodes, null, true);
+}
+
+/** Salva un nodo (aggiunta o modifica) */
+function salvaOrgNode() {
+  const nome   = (document.getElementById('org-input-nome').value  || '').trim();
+  const ruolo  = (document.getElementById('org-input-ruolo').value || '').trim();
+  const selPar = document.getElementById('org-input-parent');
+  const parentId = (selPar && selPar.value) ? selPar.value : null;
+  const editId = (document.getElementById('org-edit-id').value || '').trim();
+
+  if (!nome) { toast('Inserisci il nome della persona'); return; }
+
+  const nodes = getOrganigramma();
+
+  if (editId) {
+    // Controllo cicli
+    if (parentId && isDescendenteOrg(nodes, editId, parentId)) {
+      toast('Impossibile: il superiore scelto è un subordinato di questa persona');
+      return;
+    }
+    const node = nodes.find(n => n.id === editId);
+    if (node) { node.nome = nome; node.ruolo = ruolo; node.parentId = parentId; }
+    annullaEditOrg();
+  } else {
+    nodes.push({ id: uid(), nome: nome, ruolo: ruolo, parentId: parentId });
+    document.getElementById('org-input-nome').value  = '';
+    document.getElementById('org-input-ruolo').value = '';
+    if (selPar) selPar.value = '';
+  }
+
+  state.organigramma = nodes;
+  save();
+  renderOrganigramma();
+  toast(editId ? 'Persona aggiornata' : nome + ' aggiunto/a all\'organigramma');
+}
+
+/** Apre il form in modalità modifica per un nodo esistente */
+function openEditOrgNode(id) {
+  const nodes = getOrganigramma();
+  const node  = nodes.find(n => n.id === id);
+  if (!node) return;
+
+  document.getElementById('org-input-nome').value  = node.nome  || '';
+  document.getElementById('org-input-ruolo').value = node.ruolo || '';
+  document.getElementById('org-edit-id').value     = id;
+  document.getElementById('org-btn-annulla').style.display = '';
+  document.getElementById('org-form-title').textContent    = '✏️ Modifica: ' + node.nome;
+  document.getElementById('org-btn-salva').textContent     = 'Aggiorna';
+
+  // Popola select escludendo il nodo e i suoi discendenti
+  popolaOrgForm(id);
+  const selPar = document.getElementById('org-input-parent');
+  if (selPar) selPar.value = node.parentId || '';
+
+  const form = document.getElementById('org-add-form');
+  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/** Ripristina il form alla modalità aggiunta */
+function annullaEditOrg() {
+  document.getElementById('org-input-nome').value  = '';
+  document.getElementById('org-input-ruolo').value = '';
+  const selPar = document.getElementById('org-input-parent');
+  if (selPar) selPar.value = '';
+  document.getElementById('org-edit-id').value                = '';
+  document.getElementById('org-btn-annulla').style.display    = 'none';
+  document.getElementById('org-form-title').textContent       = '+ Aggiungi persona';
+  document.getElementById('org-btn-salva').textContent        = 'Salva';
+  popolaOrgForm(null);
+}
+
+/** Elimina un nodo. I figli diretti vengono promossi al livello del genitore rimosso. */
+function deleteOrgNode(id) {
+  const nodes = getOrganigramma();
+  const node  = nodes.find(n => n.id === id);
+  if (!node) return;
+
+  const figli = nodes.filter(n => n.parentId === id);
+  const msg = figli.length > 0
+    ? 'Rimuovere "' + node.nome + '"?\n\n' + figli.length + ' subordinato/i diretto/i verranno promossi al livello superiore.'
+    : 'Rimuovere "' + node.nome + '" dall\'organigramma?';
+  if (!confirm(msg)) return;
+
+  // Promuovi i figli diretti al parentId del nodo rimosso
+  figli.forEach(f => { f.parentId = node.parentId || null; });
+
+  // Rimuovi il nodo
+  const idx = nodes.findIndex(n => n.id === id);
+  if (idx >= 0) nodes.splice(idx, 1);
+
+  state.organigramma = nodes;
+  save();
+  renderOrganigramma();
+  toast('"' + node.nome + '" rimosso');
 }
 </script>
 
