@@ -6684,31 +6684,60 @@ function disegnaGraficoStat(tipo, nomeAz) {
   const cH = H - pT - pB;
   const stepX = cW / 11;
 
-  // Range calcolato su TUTTE le serie (anche quelle nascoste) per asse Y stabile
+  // Range calcolato su TUTTE le serie (anche quelle nascoste) per asse Y stabile.
+  // Include sempre lo zero come riferimento.
+  // Aggiunge un margine del 10% sopra e sotto per non tagliare i punti ai bordi.
   const tuttiValori = serieTutte.reduce(function(acc, s) {
     return acc.concat(s.pts.map(function(p) { return p.v; }));
   }, []);
-  const maxV = Math.max.apply(null, tuttiValori);
-  const minV = Math.min(0, Math.min.apply(null, tuttiValori));
-  const range = maxV - minV || 1;
+  const rawMax = Math.max.apply(null, tuttiValori);
+  const rawMin = Math.min.apply(null, tuttiValori);
+  // Includi sempre lo zero nell'asse Y per riferimento
+  const dataMax = Math.max(0, rawMax);
+  const dataMin = Math.min(0, rawMin);
+  const span    = dataMax - dataMin || 1;
+  const margin  = span * 0.10;  // 10% di margine visivo
+  const maxV    = dataMax + margin;
+  const minV    = dataMin - (dataMin < 0 ? margin : 0);  // margine solo se ci sono negativi
+  const range   = maxV - minV || 1;
+
+  const hasNegative = dataMin < 0;  // true se il range include valori negativi
 
   function valToY(v) { return pT + cH - ((v - minV) / range) * cH; }
   function mToX(m)   { return pL + m * stepX; }
 
-  // Griglia orizzontale
+  // Griglia orizzontale (5 linee equidistanti)
   for (let i = 0; i <= 5; i++) {
     const val = minV + (range / 5) * i;
-    const y = valToY(val);
+    const y   = valToY(val);
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
+    ctx.lineWidth   = 1;
+    ctx.setLineDash([]);
     ctx.beginPath(); ctx.moveTo(pL, y); ctx.lineTo(W - pR, y); ctx.stroke();
     ctx.fillStyle = '#8fa8b8';
-    ctx.font = '9px Segoe UI, sans-serif';
+    ctx.font      = '9px Segoe UI, sans-serif';
     ctx.textAlign = 'right';
-    const lbl = val >= 1000000 ? (val/1000000).toFixed(1)+'M'
-              : val >= 1000    ? (val/1000).toFixed(0)+'k'
+    const absVal = Math.abs(val);
+    const sign   = val < 0 ? '-' : '';
+    const lbl = absVal >= 1000000 ? sign + (absVal/1000000).toFixed(1)+'M'
+              : absVal >= 1000    ? sign + (absVal/1000).toFixed(0)+'k'
               : val.toFixed(0);
     ctx.fillText(lbl, pL - 4, y + 3);
+  }
+
+  // Linea dello zero — tratteggiata, più marcata — solo se il range include negativi
+  if (hasNegative) {
+    const yZero = valToY(0);
+    ctx.strokeStyle = 'rgba(179,70,141,0.45)';
+    ctx.lineWidth   = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(pL, yZero); ctx.lineTo(W - pR, yZero); ctx.stroke();
+    ctx.setLineDash([]);
+    // Etichetta "0" sull'asse
+    ctx.fillStyle = 'rgba(179,70,141,0.8)';
+    ctx.font      = '9px Segoe UI, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('0', pL - 4, yZero + 3);
   }
 
   // Etichette mesi
@@ -6782,9 +6811,11 @@ function disegnaGraficoStat(tipo, nomeAz) {
     });
 
     if (best) {
-      const vFmt = best.v >= 1000000 ? (best.v / 1000000).toFixed(2) + ' M'
-                 : best.v >= 1000    ? (best.v / 1000).toFixed(1) + 'k'
-                 : best.v.toFixed(0);
+      const absV  = Math.abs(best.v);
+      const sign  = best.v < 0 ? '-' : '';
+      const vFmt  = absV >= 1000000 ? sign + (absV / 1000000).toFixed(2) + ' M'
+                  : absV >= 1000    ? sign + (absV / 1000).toFixed(1) + 'k'
+                  : best.v.toFixed(0);
       tooltip.textContent = MESI_NOMI_FULL[best.m] + ' ' + best.anno + ': ' + vFmt;
       tooltip.style.borderColor = best.colore;
       tooltip.style.display = 'block';
@@ -6992,9 +7023,18 @@ function renderRiepilogoAnni(tipo, nomeAz) {
   if (righe.length === 0) { div.innerHTML = ''; return; }
 
   function fmtVal(v) {
-    if (v >= 1000000) return '&#8364;&nbsp;' + (v / 1000000).toFixed(2) + '&nbsp;M';
-    if (v >= 1000)    return '&#8364;&nbsp;' + (v / 1000).toFixed(1) + 'k';
-    return '&#8364;&nbsp;' + v.toFixed(0);
+    const absV = Math.abs(v);
+    const sign = v < 0 ? '-' : '';
+    let num;
+    if (absV >= 1000000) num = sign + (absV / 1000000).toFixed(2) + '&nbsp;M';
+    else if (absV >= 1000) num = sign + (absV / 1000).toFixed(1) + 'k';
+    else num = v.toFixed(0);
+    return '&#8364;&nbsp;' + num;
+  }
+  function fmtValHtml(v) {
+    // Avvolge in rosso se negativo
+    const s = fmtVal(v);
+    return v < 0 ? '<span style="color:var(--danger);">' + s + '</span>' : s;
   }
 
   let html = '<div class="stat-riepilogo-wrap">';
@@ -7025,7 +7065,7 @@ function renderRiepilogoAnni(tipo, nomeAz) {
 
     html += '<tr>'
          + '<td class="stat-riepilogo-anno">' + r.anno + '</td>'
-         + '<td class="stat-riepilogo-tot">'  + fmtVal(r.tot) + '</td>'
+         + '<td class="stat-riepilogo-tot">'  + fmtValHtml(r.tot) + '</td>'
          + '<td class="stat-riepilogo-incr">' + incrHtml + '</td>'
          + '</tr>';
   });
