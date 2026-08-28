@@ -1234,6 +1234,8 @@
     gap: 8px;
   }
 
+  .disp-coppia { display: flex; gap: 3px; }
+
   .disp-column-label {
     text-align: center;
     font-size: 0.7rem;
@@ -1683,6 +1685,8 @@
       overflow: hidden !important;
       text-overflow: ellipsis !important;
     }
+
+    body.print-disposizione .disp-coppia { display:flex !important; gap:2mm; }
   }
 
   /* ===== PRINT — FOGLIETTINI (A4 portrait, 3×4 = 12 per foglio) ===== */
@@ -3559,6 +3563,8 @@ async function load() {
     if (i.presenzaG1 === undefined) { i.presenzaG1 = i.presenza || false; i.presenzaG2 = false; }
     if (i.tipoG1 === undefined) { i.tipoG1 = i.tipo || 'Pagante'; i.tipoG2 = 'Pagante'; }
   });
+  // ===== MIGRAZIONE: campo giorno nelle disposizioni (default 'G1') =====
+  (state.disposizioni || []).forEach(d => { if (!d.giorno) d.giorno = 'G1'; });
   // ===== MIGRAZIONE: consolida nomi iscritti in persone[] delle aziende =====
   migratePersoneFromIscritti();
 }
@@ -4421,6 +4427,35 @@ function printFirmeG(g) {
   document.body.classList.remove(cls);
 }
 
+// ===== HELPER SUPERVISORI PER GIORNATA =====
+function getSupervisoreG1(isc) {
+  const ed = isc.edition || state.edition;
+  const dispG1 = (state.disposizioni || []).find(d =>
+    d.edition === ed &&
+    (d.giorno || 'G1') === 'G1' &&
+    (d.banchi || []).some(b => b.clienteId === isc.id)
+  );
+  if (!dispG1) return '';
+  const banco = (dispG1.banchi || []).find(b => b.clienteId === isc.id);
+  if (!banco || !banco.supervisoreId) return '';
+  const sup = (dispG1.supervisori || []).find(s => s.id === banco.supervisoreId);
+  return sup ? ((sup.nome || '') + ' ' + (sup.cognome || '')).trim() : '';
+}
+
+function getSupervisoreG2(isc) {
+  const ed = isc.edition || state.edition;
+  const dispG2 = (state.disposizioni || []).find(d =>
+    d.edition === ed &&
+    (d.giorno || 'G1') === 'G2' &&
+    (d.banchi || []).some(b => b.clienteId === isc.id)
+  );
+  if (!dispG2) return '';
+  const banco = (dispG2.banchi || []).find(b => b.clienteId === isc.id);
+  if (!banco || !banco.supervisoreId) return '';
+  const sup = (dispG2.supervisori || []).find(s => s.id === banco.supervisoreId);
+  return sup ? ((sup.nome || '') + ' ' + (sup.cognome || '')).trim() : '';
+}
+
 // ===== PAGE: REPORT PROGRAMMAZIONE =====
 function renderReport() {
   const edition = state.edition;
@@ -4433,9 +4468,9 @@ function renderReport() {
   const empty = document.getElementById('report-empty');
   if (!tbody) return;
 
-  // Solo presenti, ordinati per cognome
+  // Solo presenti (almeno G1 o G2), ordinati per cognome
   const presenti = state.iscritti
-    .filter(i => i.edition === edition && i.presenza)
+    .filter(i => i.edition === edition && (i.presenzaG1 || i.presenzaG2))
     .sort((a, b) => (a.cognome || '').toLowerCase() < (b.cognome || '').toLowerCase() ? -1 : 1);
 
   tbody.innerHTML = '';
@@ -4458,7 +4493,8 @@ function renderReport() {
       <td>${escHtml(isc.esercizio || '—')}</td>
       <td class="prog-cell">${escHtml(isc.programmazione || '—')}</td>
       <td>${escHtml(isc.corsoSuccessivo || '—')}</td>
-      <td>${escHtml(getSupervisoreReport(isc) || '—')}</td>`;
+      <td>${escHtml(getSupervisoreG1(isc) || '—')}</td>
+      <td>${escHtml(getSupervisoreG2(isc) || '—')}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -4937,8 +4973,13 @@ const SCHEMI = {
   '2col-4': { label: '2 colonne × 5 file × 4 banchi (40 totali)', colonne: [4, 4], file: 5 },
   '3col-3': { label: '3 colonne × 5 file × 3 banchi (45 totali)', colonne: [3, 3, 3], file: 5 },
   '2col-misto': { label: '2 colonne (3+2 banchi) × 5 file (25 totali)', colonne: [3, 2], file: 5 },
-  '2col-6x2': { label: '2 colonne × 6 file × 2 banchi (24 totali)', colonne: [2, 2], file: 6 }
+  '2col-6x2': { label: '2 colonne × 6 file × 2 banchi (24 totali)', colonne: [2, 2], file: 6 },
+  '3col-4coppie': { label: '3 colonne × 4 coppie di banchi ciascuna (12 coppie, 24 posti)', colonne: [1,1,1], file: 4, coppie: true }
 };
+
+function getSchemaFor(disp) {
+  return disp.customSchema || SCHEMI[disp.schema] || null;
+}
 
 function dispCurrentEdition() {
   return state.edition || '';
@@ -4987,6 +5028,8 @@ function renderDisposizioni() {
     document.getElementById('disp-piantina').style.display = 'none';
     document.getElementById('disp-supervisori-section').style.display = 'none';
     document.getElementById('disp-schema-group').style.display = 'none';
+    const gioEl = document.getElementById('disp-giorno-group');
+    if (gioEl) gioEl.style.display = 'none';
     return;
   }
 
@@ -4994,8 +5037,11 @@ function renderDisposizioni() {
   document.getElementById('disp-piantina').style.display = '';
   document.getElementById('disp-supervisori-section').style.display = '';
   document.getElementById('disp-schema-group').style.display = '';
+  const gioEl = document.getElementById('disp-giorno-group');
+  if (gioEl) gioEl.style.display = '';
 
   renderSchemaRadios(disp);
+  renderGiornoRadios(disp);
   renderPiantina(disp);
   renderSupTable(disp);
 }
@@ -5003,48 +5049,329 @@ function renderDisposizioni() {
 function renderSchemaRadios(disp) {
   const wrap = document.getElementById('disp-schema-radios');
   wrap.innerHTML = '';
+  const isCustom = !!disp.customSchema;
+
   Object.keys(SCHEMI).forEach(key => {
     const lbl = document.createElement('label');
-    lbl.className = 'schema-radio-label' + (disp.schema === key ? ' sel' : '');
-    lbl.innerHTML = '<input type="radio" name="disp-schema" value="' + key + '"' + (disp.schema === key ? ' checked' : '') + '>' + SCHEMI[key].label;
+    const isSel = !isCustom && disp.schema === key;
+    lbl.className = 'schema-radio-label' + (isSel ? ' sel' : '');
+    lbl.innerHTML = '<input type="radio" name="disp-schema" value="' + key + '"' + (isSel ? ' checked' : '') + '>' + SCHEMI[key].label;
     lbl.querySelector('input').addEventListener('change', function() {
       if (this.checked) {
         changeSchema(disp.id, key);
+        const cg = document.getElementById('disp-custom-group');
+        if (cg) cg.style.display = 'none';
       }
     });
     wrap.appendChild(lbl);
   });
+
+  // Pulsante Personalizza
+  const lbl = document.createElement('label');
+  lbl.className = 'schema-radio-label' + (isCustom ? ' sel' : '');
+  lbl.innerHTML = '<input type="radio" name="disp-schema" value="__custom__"' + (isCustom ? ' checked' : '') + '>Personalizza...';
+  lbl.querySelector('input').addEventListener('change', function() {
+    if (this.checked) {
+      const cg = document.getElementById('disp-custom-group');
+      if (cg) { cg.style.display = ''; buildCustomSchemaUI(disp.id); }
+    }
+  });
+  wrap.appendChild(lbl);
+
+  // Mostra/nascondi il pannello personalizza in base allo stato corrente
+  const cg = document.getElementById('disp-custom-group');
+  if (cg) cg.style.display = isCustom ? '' : 'none';
+  if (isCustom) buildCustomSchemaUI(disp.id);
+}
+
+function buildCustomSchemaUI(dispId) {
+  const container = document.getElementById('disp-custom-builder');
+  if (!container) return;
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+  const cs = disp && disp.customSchema;
+
+  const prevCols = cs ? cs.colonne.length : 3;
+  const prevFile = cs ? cs.file : 4;
+  const prevCoppie = cs ? !!cs.coppie : false;
+  // Per ogni colonna, il numero di unità (banchi o coppie)
+  const prevUnita = cs ? cs.colonne : Array(prevCols).fill(1);
+
+  container.innerHTML = '';
+
+  // Riga 1: num colonne
+  const r1 = document.createElement('div');
+  r1.style.cssText = 'display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:12px;';
+  r1.innerHTML =
+    '<label style="font-size:0.78rem;color:var(--testo-muted);">Colonne<br>' +
+    '<input type="number" id="cb-cols" min="1" max="8" value="' + prevCols + '" style="width:70px;background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:5px 8px;border-radius:6px;font-size:0.85rem;outline:none;" oninput="buildCustomSchemaUI(\'' + dispId + '\')">' +
+    '</label>' +
+    '<label style="font-size:0.78rem;color:var(--testo-muted);">File (righe)<br>' +
+    '<input type="number" id="cb-file" min="1" max="20" value="' + prevFile + '" style="width:70px;background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:5px 8px;border-radius:6px;font-size:0.85rem;outline:none;">' +
+    '</label>' +
+    '<label style="font-size:0.78rem;color:var(--testo-muted);display:flex;align-items:center;gap:6px;cursor:pointer;">' +
+    '<input type="checkbox" id="cb-coppie" ' + (prevCoppie ? 'checked' : '') + ' style="accent-color:var(--rosa);width:15px;height:15px;">' +
+    'Banchi a coppie</label>';
+  container.appendChild(r1);
+
+  // Riga 2: unità per colonna
+  const nCols = parseInt(document.getElementById('cb-cols') ? document.getElementById('cb-cols').value : prevCols) || prevCols;
+  if (nCols > 0) {
+    const r2 = document.createElement('div');
+    r2.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;';
+    for (let c = 0; c < nCols; c++) {
+      const v = (prevUnita[c] !== undefined) ? prevUnita[c] : 1;
+      r2.innerHTML += '<label style="font-size:0.75rem;color:var(--testo-muted);">Col. ' + (c+1) + '<br>' +
+        '<input type="number" class="cb-unita" data-col="' + c + '" min="1" max="12" value="' + v + '" style="width:60px;background:var(--input-bg);border:1px solid var(--input-border);color:var(--testo-chiaro);padding:5px 6px;border-radius:6px;font-size:0.82rem;outline:none;">' +
+        '</label>';
+    }
+    container.appendChild(r2);
+  }
+
+  // Pulsante applica
+  const btnApply = document.createElement('button');
+  btnApply.className = 'btn btn-primary';
+  btnApply.style.cssText = 'padding:8px 18px;font-size:0.82rem;';
+  btnApply.textContent = 'Crea disposizione personalizzata';
+  btnApply.onclick = function() { applyCustomSchema(dispId); };
+  container.appendChild(btnApply);
+}
+
+function applyCustomSchema(dispId) {
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+  if (!disp) return;
+
+  const nCols = parseInt(document.getElementById('cb-cols').value) || 3;
+  const nFile = parseInt(document.getElementById('cb-file').value) || 4;
+  const coppie = document.getElementById('cb-coppie').checked;
+
+  const unitaInputs = document.querySelectorAll('.cb-unita');
+  const colonne = [];
+  for (let c = 0; c < nCols; c++) {
+    const inp = document.querySelector('.cb-unita[data-col="' + c + '"]');
+    colonne.push(inp ? (parseInt(inp.value) || 1) : 1);
+  }
+
+  const label = nCols + ' colonne × ' + nFile + ' file' + (coppie ? ' (coppie)' : '') + ' — personalizzato';
+  disp.customSchema = { label: label, colonne: colonne, file: nFile, coppie: coppie };
+  disp.schema = '__custom__';
+  disp.banchi = buildBanchi(disp.customSchema);
+  save();
+  renderDisposizioni();
+  toast('Schema personalizzato applicato');
+}
+
+function renderGiornoRadios(disp) {
+  const wrap = document.getElementById('disp-giorno-radios');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  [{ val: 'G1', lbl: 'Giorno 1' }, { val: 'G2', lbl: 'Giorno 2' }].forEach(opt => {
+    const lbl = document.createElement('label');
+    lbl.className = 'schema-radio-label' + ((disp.giorno || 'G1') === opt.val ? ' sel' : '');
+    lbl.style.cssText = 'margin-right:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;';
+    const inp = document.createElement('input');
+    inp.type = 'radio';
+    inp.name = 'disp-giorno';
+    inp.value = opt.val;
+    if ((disp.giorno || 'G1') === opt.val) inp.checked = true;
+    inp.addEventListener('change', function() {
+      if (this.checked) changeDispGiorno(disp.id, opt.val);
+    });
+    lbl.appendChild(inp);
+    lbl.appendChild(document.createTextNode(opt.lbl));
+    wrap.appendChild(lbl);
+  });
+}
+
+function changeDispGiorno(dispId, giorno) {
+  const disp = (state.disposizioni || []).find(d => d.id === dispId);
+  if (!disp) return;
+  disp.giorno = giorno;
+  save();
+  toast('Giorno disposizione impostato: ' + giorno);
 }
 
 function changeSchema(dispId, schema) {
   const disp = (state.disposizioni || []).find(d => d.id === dispId);
   if (!disp) return;
-  if (disp.schema === schema) return;
+  if (disp.schema === schema && !disp.customSchema) return;
   disp.schema = schema;
+  disp.customSchema = undefined;
   disp.banchi = buildBanchi(schema);
   save();
   renderDisposizioni();
   toast('Schema aggiornato');
 }
 
-function buildBanchi(schema) {
-  const s = SCHEMI[schema];
+function buildBanchi(schemaKeyOrObj) {
+  const s = (typeof schemaKeyOrObj === 'string') ? SCHEMI[schemaKeyOrObj] : schemaKeyOrObj;
   const banchi = [];
   let num = 1;
   for (let f = 0; f < s.file; f++) {
     s.colonne.forEach((n, col) => {
-      for (let b = 0; b < n; b++) {
-        banchi.push({ id: uid(), num: num++, row: f, col: col, sub: b, clienteId: '', supervisoreId: '', salaPratica: false });
+      if (s.coppie) {
+        for (let c = 0; c < n; c++) {
+          const coppiaId = f * 1000 + col * 100 + c;
+          banchi.push({ id: uid(), num: num++, row: f, col: col, sub: c * 2,     coppia: coppiaId, clienteId: '', supervisoreId: '', salaPratica: false });
+          banchi.push({ id: uid(), num: num++, row: f, col: col, sub: c * 2 + 1, coppia: coppiaId, clienteId: '', supervisoreId: '', salaPratica: false });
+        }
+      } else {
+        for (let b = 0; b < n; b++) {
+          banchi.push({ id: uid(), num: num++, row: f, col: col, sub: b, clienteId: '', supervisoreId: '', salaPratica: false });
+        }
       }
     });
   }
   return banchi;
 }
 
+function buildBancoEl(banco, presenti, disp) {
+  const el = document.createElement('div');
+  el.className = 'disp-banco' + (banco.clienteId ? ' has-cliente' : '') + (banco.salaPratica ? ' sala-pratica' : '');
+  el.id = 'banco-' + banco.id;
+
+  const numEl = document.createElement('div');
+  numEl.className = 'disp-banco-num';
+  numEl.textContent = '#' + banco.num;
+  el.appendChild(numEl);
+
+  if (!banco.clienteId) {
+    const emptyLbl = document.createElement('div');
+    emptyLbl.className = 'disp-banco-empty-label';
+    emptyLbl.textContent = 'Banco ' + banco.num;
+    el.appendChild(emptyLbl);
+  }
+
+  // Dropdown cliente
+  const clienteSel = document.createElement('select');
+  clienteSel.className = 'disp-cliente-sel';
+  clienteSel.innerHTML = '<option value="">— Vuoto —</option>';
+  presenti.forEach(i => {
+    const o = document.createElement('option');
+    o.value = i.id;
+    o.textContent = (i.nome || '') + ' ' + (i.cognome || '');
+    if (banco.clienteId === i.id) o.selected = true;
+    clienteSel.appendChild(o);
+  });
+  clienteSel.addEventListener('change', function() {
+    banco.clienteId = this.value;
+    save();
+    renderDisposizioni();
+  });
+  el.appendChild(clienteSel);
+
+  // Corso cliente (testo)
+  const corsoEl = document.createElement('div');
+  corsoEl.className = 'disp-banco-corso';
+  if (banco.clienteId) {
+    const isc = presenti.find(i => i.id === banco.clienteId);
+    corsoEl.textContent = (isc && isc.corso) ? isc.corso : '—';
+  }
+  el.appendChild(corsoEl);
+
+  // Corso Successivo (testo)
+  const corsoSuccEl = document.createElement('div');
+  corsoSuccEl.className = 'disp-banco-corso-successivo';
+  if (banco.clienteId) {
+    const isc = presenti.find(i => i.id === banco.clienteId);
+    const cs = isc ? (isc.corsoSuccessivo || '') : '';
+    corsoSuccEl.textContent = cs ? ('Prossimo: ' + cs) : '';
+  }
+  el.appendChild(corsoSuccEl);
+
+  // Versione print: nome
+  const pNome = document.createElement('div');
+  pNome.className = 'disp-banco-print-nome';
+  if (banco.clienteId) {
+    const isc = presenti.find(i => i.id === banco.clienteId);
+    pNome.textContent = isc ? ((isc.nome || '') + ' ' + (isc.cognome || '')).trim() : '';
+  }
+  el.appendChild(pNome);
+
+  // Versione print: corso
+  const pCorso = document.createElement('div');
+  pCorso.className = 'disp-banco-print-corso';
+  if (banco.clienteId) {
+    const isc = presenti.find(i => i.id === banco.clienteId);
+    pCorso.textContent = (isc && isc.corso) ? isc.corso : '—';
+  }
+  el.appendChild(pCorso);
+
+  // Versione print: corso successivo
+  const pCorsoSucc = document.createElement('div');
+  pCorsoSucc.className = 'disp-banco-print-corso-successivo';
+  if (banco.clienteId) {
+    const isc = presenti.find(i => i.id === banco.clienteId);
+    const cs = isc ? (isc.corsoSuccessivo || '') : '';
+    pCorsoSucc.textContent = cs ? ('Prossimo: ' + cs) : '';
+  }
+  el.appendChild(pCorsoSucc);
+
+  // Dropdown supervisore
+  const supSel = document.createElement('select');
+  supSel.className = 'disp-sup-sel';
+  supSel.innerHTML = '<option value="">Supervisore —</option>';
+  (disp.supervisori || []).forEach(sv => {
+    const o = document.createElement('option');
+    o.value = sv.id;
+    o.textContent = sv.nome + ' ' + sv.cognome;
+    if (banco.supervisoreId === sv.id) o.selected = true;
+    supSel.appendChild(o);
+  });
+  supSel.addEventListener('change', function() {
+    banco.supervisoreId = this.value;
+    save();
+  });
+  el.appendChild(supSel);
+
+  // Versione print: supervisore
+  const pSup = document.createElement('div');
+  pSup.className = 'disp-banco-print-sup';
+  if (banco.supervisoreId) {
+    const sup = (disp.supervisori || []).find(sv => sv.id === banco.supervisoreId);
+    pSup.textContent = sup ? 'Sup: ' + sup.nome + ' ' + sup.cognome : '';
+  }
+  el.appendChild(pSup);
+
+  // Toggle sala pratica
+  const spRow = document.createElement('div');
+  spRow.className = 'disp-sala-pratica-row';
+  const spLabel = document.createElement('label');
+  spLabel.className = 'toggle';
+  const spInput = document.createElement('input');
+  spInput.type = 'checkbox';
+  spInput.checked = !!banco.salaPratica;
+  spInput.addEventListener('change', function() {
+    banco.salaPratica = this.checked;
+    save();
+    const bancEl = document.getElementById('banco-' + banco.id);
+    if (bancEl) {
+      bancEl.classList.toggle('sala-pratica', banco.salaPratica);
+    }
+  });
+  const spSlider = document.createElement('span');
+  spSlider.className = 'toggle-slider';
+  spLabel.appendChild(spInput);
+  spLabel.appendChild(spSlider);
+  const spText = document.createElement('span');
+  spText.textContent = 'Sala pratica';
+  spRow.appendChild(spLabel);
+  spRow.appendChild(spText);
+  el.appendChild(spRow);
+
+  // Versione print: sala pratica
+  const pSala = document.createElement('div');
+  pSala.className = 'disp-banco-print-sala';
+  if (banco.salaPratica) pSala.textContent = 'SALA PRATICA';
+  el.appendChild(pSala);
+
+  return el;
+}
+
 function renderPiantina(disp) {
   const wrap = document.getElementById('disp-piantina');
   wrap.innerHTML = '';
-  const s = SCHEMI[disp.schema];
+  const s = getSchemaFor(disp);
+  if (!s) return;
   const presenti = dispGetPresenti();
 
   s.colonne.forEach((n, colIdx) => {
@@ -5073,148 +5400,24 @@ function renderPiantina(disp) {
       rigaWrap.className = 'disp-riga-banchi';
       rigaWrap.style.cssText = 'display:flex;gap:8px;';
 
-      bancheRiga.forEach(banco => {
-        const el = document.createElement('div');
-        el.className = 'disp-banco' + (banco.clienteId ? ' has-cliente' : '') + (banco.salaPratica ? ' sala-pratica' : '');
-        el.id = 'banco-' + banco.id;
-
-        const numEl = document.createElement('div');
-        numEl.className = 'disp-banco-num';
-        numEl.textContent = '#' + banco.num;
-        el.appendChild(numEl);
-
-        if (!banco.clienteId) {
-          const emptyLbl = document.createElement('div');
-          emptyLbl.className = 'disp-banco-empty-label';
-          emptyLbl.textContent = 'Banco ' + banco.num;
-          el.appendChild(emptyLbl);
-        }
-
-        // Dropdown cliente
-        const clienteSel = document.createElement('select');
-        clienteSel.className = 'disp-cliente-sel';
-        clienteSel.innerHTML = '<option value="">— Vuoto —</option>';
-        presenti.forEach(i => {
-          const o = document.createElement('option');
-          o.value = i.id;
-          o.textContent = (i.nome || '') + ' ' + (i.cognome || '');
-          if (banco.clienteId === i.id) o.selected = true;
-          clienteSel.appendChild(o);
+      if (s.coppie) {
+        // Raggruppa per coppia e avvolgi in .disp-coppia
+        const cGroups = {};
+        const cOrder = [];
+        bancheRiga.forEach(b => {
+          const k = (b.coppia !== undefined) ? b.coppia : b.sub;
+          if (!cGroups[k]) { cGroups[k] = []; cOrder.push(k); }
+          cGroups[k].push(b);
         });
-        clienteSel.addEventListener('change', function() {
-          banco.clienteId = this.value;
-          save();
-          renderDisposizioni();
+        cOrder.forEach(k => {
+          const cDiv = document.createElement('div');
+          cDiv.className = 'disp-coppia';
+          cGroups[k].forEach(b => cDiv.appendChild(buildBancoEl(b, presenti, disp)));
+          rigaWrap.appendChild(cDiv);
         });
-        el.appendChild(clienteSel);
-
-        // Corso cliente (testo)
-        const corsoEl = document.createElement('div');
-        corsoEl.className = 'disp-banco-corso';
-        if (banco.clienteId) {
-          const isc = presenti.find(i => i.id === banco.clienteId);
-          corsoEl.textContent = (isc && isc.corso) ? isc.corso : '—';
-        }
-        el.appendChild(corsoEl);
-
-        // Corso Successivo (testo)
-        const corsoSuccEl = document.createElement('div');
-        corsoSuccEl.className = 'disp-banco-corso-successivo';
-        if (banco.clienteId) {
-          const isc = presenti.find(i => i.id === banco.clienteId);
-          const cs = isc ? (isc.corsoSuccessivo || '') : '';
-          corsoSuccEl.textContent = cs ? ('Prossimo: ' + cs) : '';
-        }
-        el.appendChild(corsoSuccEl);
-
-        // Versione print: nome
-        const pNome = document.createElement('div');
-        pNome.className = 'disp-banco-print-nome';
-        if (banco.clienteId) {
-          const isc = presenti.find(i => i.id === banco.clienteId);
-          pNome.textContent = isc ? ((isc.nome || '') + ' ' + (isc.cognome || '')).trim() : '';
-        }
-        el.appendChild(pNome);
-
-        // Versione print: corso
-        const pCorso = document.createElement('div');
-        pCorso.className = 'disp-banco-print-corso';
-        if (banco.clienteId) {
-          const isc = presenti.find(i => i.id === banco.clienteId);
-          pCorso.textContent = (isc && isc.corso) ? isc.corso : '—';
-        }
-        el.appendChild(pCorso);
-
-        // Versione print: corso successivo
-        const pCorsoSucc = document.createElement('div');
-        pCorsoSucc.className = 'disp-banco-print-corso-successivo';
-        if (banco.clienteId) {
-          const isc = presenti.find(i => i.id === banco.clienteId);
-          const cs = isc ? (isc.corsoSuccessivo || '') : '';
-          pCorsoSucc.textContent = cs ? ('Prossimo: ' + cs) : '';
-        }
-        el.appendChild(pCorsoSucc);
-
-        // Dropdown supervisore
-        const supSel = document.createElement('select');
-        supSel.className = 'disp-sup-sel';
-        supSel.innerHTML = '<option value="">Supervisore —</option>';
-        (disp.supervisori || []).forEach(s => {
-          const o = document.createElement('option');
-          o.value = s.id;
-          o.textContent = s.nome + ' ' + s.cognome;
-          if (banco.supervisoreId === s.id) o.selected = true;
-          supSel.appendChild(o);
-        });
-        supSel.addEventListener('change', function() {
-          banco.supervisoreId = this.value;
-          save();
-        });
-        el.appendChild(supSel);
-
-        // Versione print: supervisore
-        const pSup = document.createElement('div');
-        pSup.className = 'disp-banco-print-sup';
-        if (banco.supervisoreId) {
-          const sup = (disp.supervisori || []).find(s => s.id === banco.supervisoreId);
-          pSup.textContent = sup ? 'Sup: ' + sup.nome + ' ' + sup.cognome : '';
-        }
-        el.appendChild(pSup);
-
-        // Toggle sala pratica
-        const spRow = document.createElement('div');
-        spRow.className = 'disp-sala-pratica-row';
-        const spLabel = document.createElement('label');
-        spLabel.className = 'toggle';
-        const spInput = document.createElement('input');
-        spInput.type = 'checkbox';
-        spInput.checked = !!banco.salaPratica;
-        spInput.addEventListener('change', function() {
-          banco.salaPratica = this.checked;
-          save();
-          const bancEl = document.getElementById('banco-' + banco.id);
-          if (bancEl) {
-            bancEl.classList.toggle('sala-pratica', banco.salaPratica);
-          }
-        });
-        const spSlider = document.createElement('span');
-        spSlider.className = 'toggle-slider';
-        spLabel.appendChild(spInput);
-        spLabel.appendChild(spSlider);
-        const spText = document.createElement('span');
-        spText.textContent = 'Sala pratica';
-        spRow.appendChild(spLabel);
-        spRow.appendChild(spText);
-        el.appendChild(spRow);
-
-        // Versione print: sala pratica
-        const pSala = document.createElement('div');
-        pSala.className = 'disp-banco-print-sala';
-        if (banco.salaPratica) pSala.textContent = 'SALA PRATICA';
-        el.appendChild(pSala);
-
-        rigaWrap.appendChild(el);
-      });
+      } else {
+        bancheRiga.forEach(banco => rigaWrap.appendChild(buildBancoEl(banco, presenti, disp)));
+      }
 
       colWrap.appendChild(rigaWrap);
     }
@@ -5289,6 +5492,7 @@ function addDisposizione() {
     id: uid(),
     name: name,
     edition: ed,
+    giorno: 'G1',
     schema: '2col-4',
     banchi: buildBanchi('2col-4'),
     supervisori: []
@@ -5344,11 +5548,28 @@ function printDisposizione() {
 
 // ===== FOGLIETTINI =====
 
+let fogliettiniGiorno = 1; // 1 = G1, 2 = G2
+
+function fogliettiniGetPresenti() {
+  const ed = dispCurrentEdition();
+  const field = fogliettiniGiorno === 2 ? 'presenzaG2' : 'presenzaG1';
+  return (state.iscritti || []).filter(i => i.edition === ed && i[field]);
+}
+
+function switchFogliettinoTab(g) {
+  fogliettiniGiorno = g;
+  const b1 = document.getElementById('tab-fogl-g1');
+  const b2 = document.getElementById('tab-fogl-g2');
+  if (b1) b1.className = g === 1 ? 'btn btn-primary' : 'btn btn-outline';
+  if (b2) b2.className = g === 2 ? 'btn btn-primary' : 'btn btn-outline';
+  renderFogliettini();
+}
+
 function renderFogliettini() {
   const ed = dispCurrentEdition();
   document.getElementById('fogl-edition-label').textContent = 'Edizione: ' + (ed || '—');
 
-  const presenti = dispGetPresenti();
+  const presenti = fogliettiniGetPresenti();
   const grid = document.getElementById('fogliettini-grid');
   const emptyEl = document.getElementById('fogl-empty');
   grid.innerHTML = '';
@@ -6180,7 +6401,8 @@ function renderGraficoCrescita() {
               <th>Esercizio</th>
               <th>Programmazione</th>
               <th>Corso Successivo</th>
-              <th>Supervisore</th>
+              <th>Supervisore G1</th>
+              <th>Supervisore G2</th>
             </tr>
           </thead>
           <tbody id="report-tbody"></tbody>
@@ -6237,6 +6459,14 @@ function renderGraficoCrescita() {
         <span class="disp-controls-label">Schema layout</span>
         <div class="disp-schema-group" id="disp-schema-radios"></div>
       </div>
+      <div class="disp-controls-group" id="disp-giorno-group" style="display:none;">
+        <span class="disp-controls-label">Giorno</span>
+        <div id="disp-giorno-radios" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;"></div>
+      </div>
+      <div class="disp-controls-group" id="disp-custom-group" style="display:none;width:100%;">
+        <span class="disp-controls-label">Schema personalizzato</span>
+        <div id="disp-custom-builder" style="margin-top:8px;padding:16px;background:rgba(26,13,22,0.6);border:1px solid var(--card-border);border-radius:10px;"></div>
+      </div>
     </div>
 
     <!-- Piantina -->
@@ -6279,6 +6509,11 @@ function renderGraficoCrescita() {
         <div class="section-subtitle" id="fogl-edition-label">Edizione: —</div>
       </div>
       <button class="btn btn-print no-print" onclick="printFogliettini()">🖨️ Stampa fogliettini</button>
+    </div>
+    <!-- Tab G1/G2 fogliettini -->
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:16px;">
+      <button id="tab-fogl-g1" class="btn btn-primary" onclick="switchFogliettinoTab(1)">Giorno 1</button>
+      <button id="tab-fogl-g2" class="btn btn-outline" onclick="switchFogliettinoTab(2)">Giorno 2</button>
     </div>
     <div class="empty-state fogliettini-empty-state" id="fogl-empty" style="display:none;">
       <div class="empty-state-icon">🗒️</div>
