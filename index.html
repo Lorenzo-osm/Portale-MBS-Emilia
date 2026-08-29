@@ -2728,6 +2728,7 @@
   <button class="nav-btn" onclick="showPage('inventario')" id="nav-inventario">Inventario</button>
   <button class="nav-btn" onclick="showPage('statistiche')" id="nav-statistiche">Statistiche</button>
   <button class="nav-btn" onclick="showPage('organigramma')" id="nav-organigramma">Organigramma</button>
+  <button class="nav-btn" onclick="esportaDati()" title="Esporta clienti e consulenti in JSON per il Wiki">&#8595; Esporta dati</button>
   <div class="edition-badge" id="navbar-edition">—</div>
   <div class="nav-user-badge" id="nav-user-badge"></div>
   <button class="nav-btn-admin-pill" id="nav-admin-btn" onclick="showPage('admin')" style="display:none;">&#9881; Admin</button>
@@ -4985,19 +4986,10 @@ function dispCurrentEdition() {
   return state.edition || '';
 }
 
-let dispGiorno = 1; // 1 = G1, 2 = G2
-
-function dispGetPresenti() {
+function dispGetPresenti(disp) {
   const ed = dispCurrentEdition();
-  const field = dispGiorno === 2 ? 'presenzaG2' : 'presenzaG1';
+  const field = (disp && disp.giorno) === 'G2' ? 'presenzaG2' : 'presenzaG1';
   return (state.iscritti || []).filter(i => i.edition === ed && i[field]);
-}
-
-function switchDispTab(g) {
-  dispGiorno = g;
-  document.getElementById('tab-disp-g1').className = g === 1 ? 'btn btn-primary' : 'btn btn-outline';
-  document.getElementById('tab-disp-g2').className = g === 2 ? 'btn btn-primary' : 'btn btn-outline';
-  renderDisposizioni();
 }
 
 function renderDisposizioni() {
@@ -5187,6 +5179,7 @@ function changeDispGiorno(dispId, giorno) {
   if (!disp) return;
   disp.giorno = giorno;
   save();
+  renderDisposizioni();
   toast('Giorno disposizione impostato: ' + giorno);
 }
 
@@ -5372,7 +5365,7 @@ function renderPiantina(disp) {
   wrap.innerHTML = '';
   const s = getSchemaFor(disp);
   if (!s) return;
-  const presenti = dispGetPresenti();
+  const presenti = dispGetPresenti(disp);
 
   s.colonne.forEach((n, colIdx) => {
     // Etichetta corridoio tra colonne
@@ -6427,12 +6420,6 @@ function renderGraficoCrescita() {
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-print no-print" onclick="printDisposizione()">🖨️ Stampa piantina</button>
       </div>
-    </div>
-
-    <!-- Tab G1/G2 -->
-    <div class="no-print" style="display:flex;gap:8px;margin-bottom:16px;">
-      <button id="tab-disp-g1" class="btn btn-primary" onclick="switchDispTab(1)">Giorno 1</button>
-      <button id="tab-disp-g2" class="btn btn-outline" onclick="switchDispTab(2)">Giorno 2</button>
     </div>
 
     <!-- Controlli -->
@@ -7950,6 +7937,80 @@ function deleteOrgNode(id) {
   save();
   renderOrganigramma();
   toast('"' + node.nome + '" rimosso');
+}
+
+// ===== ESPORTA DATI PER WIKI =====
+function buildExportPayload() {
+  const now = new Date();
+  const ts = now.toISOString().slice(0, 16).replace('T', ' ');
+
+  const consulenti = [];
+  (state.partners || []).forEach(function(p) {
+    (p.consulenti || []).forEach(function(c) {
+      consulenti.push({ nome: c.name, partner: p.name });
+    });
+  });
+
+  const clientiMap = {};
+  (state.iscritti || []).forEach(function(i) {
+    const key = (i.nome || '') + '|' + (i.cognome || '') + '|' + (i.azienda || '');
+    if (!clientiMap[key]) {
+      clientiMap[key] = {
+        nome: i.nome || '',
+        cognome: i.cognome || '',
+        azienda: i.azienda || '',
+        consulente: i.consulente || '',
+        partner: i.partner || '',
+        stato: 'fermo',
+        storico_mensile: []
+      };
+    }
+    clientiMap[key].storico_mensile.push({
+      edizione: i.edition || '',
+      presenza: !!i.presenza,
+      programmazione: i.programmazione || ''
+    });
+    if (i.presenza) clientiMap[key].stato = 'attivo';
+  });
+
+  return {
+    progetto: 'MBS Emilia',
+    edizione_corrente: state.edition,
+    esportato_il: ts,
+    consulenti: consulenti,
+    clienti: Object.values(clientiMap)
+  };
+}
+
+async function esportaDati() {
+  const json = JSON.stringify(buildExportPayload(), null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const filename = 'export-dati.json';
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      toast('Esportazione completata.');
+    } catch (e) {
+      if (e.name !== 'AbortError') _downloadFallback(blob, filename);
+    }
+  } else {
+    _downloadFallback(blob, filename);
+  }
+}
+
+function _downloadFallback(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click();
+  setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+  toast('File scaricato — spostalo in FONTI/PORTALI/Sito MBS Emilia/');
 }
 </script>
 
