@@ -2728,7 +2728,7 @@
   <button class="nav-btn" onclick="showPage('inventario')" id="nav-inventario">Inventario</button>
   <button class="nav-btn" onclick="showPage('statistiche')" id="nav-statistiche">Statistiche</button>
   <button class="nav-btn" onclick="showPage('organigramma')" id="nav-organigramma">Organigramma</button>
-  <button class="nav-btn" onclick="esportaDati()" title="Esporta clienti e consulenti in JSON per il Wiki">&#8595; Esporta dati</button>
+  <button class="nav-btn" id="nav-btn-esporta" onclick="esportaDati()" title="Esporta clienti e consulenti in JSON per il Wiki" style="display:none;">&#8595; Esporta dati</button>
   <div class="edition-badge" id="navbar-edition">—</div>
   <div class="nav-user-badge" id="nav-user-badge"></div>
   <button class="nav-btn-admin-pill" id="nav-admin-btn" onclick="showPage('admin')" style="display:none;">&#9881; Admin</button>
@@ -3257,6 +3257,7 @@
           <canvas id="stat-fat-chart" height="200" style="cursor:crosshair;"></canvas>
         </div>
         <div id="stat-fat-riepilogo"></div>
+        <div id="stat-fat-riepilogo-mesi"></div>
       </div>
 
       <!-- ===== UTILI ===== -->
@@ -3451,17 +3452,8 @@ function authSsGet(key)        { try { const v = sessionStorage.getItem(key); re
 function authSsSave(key, val)  { sessionStorage.setItem(key, JSON.stringify(val)); }
 
 function initAuth() {
-  if (!authLs(AUTH_KEYS.admin)) {
-    authLsSave(AUTH_KEYS.admin, {
-      email:    'l.gorgo@osmpartnerbologna.it',
-      password: 'Dybalronaldo055!',
-      nome:     'Lorenzo',
-      cognome:  'Gorgo'
-    });
-  }
-  if (!authLs(AUTH_KEYS.users)) {
-    authLsSave(AUTH_KEYS.users, []);
-  }
+  // no-op: auth migrata su Firestore dentro state.authAdmin / state.authUsers
+  // I valori di default vengono inizializzati in load() se mancanti nel documento Firestore
 }
 </script>
 
@@ -3518,7 +3510,10 @@ let state = {
     'Manuale Etica',
     'Rimedio statistiche in calo',
     'Rimedio programmazione ed efficienza'
-  ]
+  ],
+  // Auth — salvati su Firestore insieme al resto dello state (non su localStorage)
+  authAdmin: null,
+  authUsers: null
 };
 
 // ===== UTILITY =====
@@ -3550,6 +3545,16 @@ async function load() {
     console.error('[MBS Emilia] Errore caricamento Firestore:', e);
     showErrorOverlay('Impossibile connettersi al database. Controlla la connessione e ricarica la pagina.');
   }
+  // Auth: inizializza default se mancante (primo avvio dopo deploy del fix)
+  if (!state.authAdmin) {
+    state.authAdmin = {
+      email:    'l.gorgo@osmpartnerbologna.it',
+      password: 'Dybalronaldo055!',
+      nome:     'Lorenzo',
+      cognome:  'Gorgo'
+    };
+  }
+  if (!state.authUsers) state.authUsers = [];
   // Inizializza disposizioni se non presenti
   if (!state.disposizioni) state.disposizioni = [];
   if (!state.debriefing) state.debriefing = [];
@@ -6789,6 +6794,7 @@ function saveStatMese(tipo, nomeAz, anno, mese, valore) {
   renderFiltroAnni(tipo, nomeAz);      // aggiorna checkbox (potrebbe apparire un anno nuovo)
   disegnaGraficoStat(tipo, nomeAz);
   renderRiepilogoAnni(tipo, nomeAz);   // aggiorna tabella riepilogo in tempo reale
+  if (tipo === 'fatturato') renderRiepilogoMensile(nomeAz); // aggiorna confronto mensile
   // Aggiorna alert nella sezione iscritti
   const alertEl = document.getElementById('stat-fatturato-alert');
   if (alertEl) alertEl.style.display = hasCaloFatturatoBimensile() ? '' : 'none';
@@ -7296,6 +7302,95 @@ function renderRiepilogoAnni(tipo, nomeAz) {
   div.innerHTML = html;
 }
 
+/**
+ * Tabella confronto mese per mese del fatturato:
+ * Anno selezionato vs anno precedente, con incremento assoluto e percentuale per ogni mese.
+ */
+function renderRiepilogoMensile(nomeAz) {
+  var div = document.getElementById('stat-fat-riepilogo-mesi');
+  if (!div) return;
+
+  var annoSel  = parseInt(statAnnoSelezionato);
+  var annoPrev = annoSel - 1;
+  var mesiSel  = getStatMesi('fatturato', nomeAz, annoSel);
+  var mesiPrev = getStatMesi('fatturato', nomeAz, annoPrev);
+
+  var hasSel  = mesiSel.some(function(v) { return v !== null; });
+  var hasPrev = mesiPrev.some(function(v) { return v !== null; });
+  if (!hasSel && !hasPrev) { div.innerHTML = ''; return; }
+
+  function fmtEur(v) {
+    if (v === null || v === undefined) return '<span class="stat-riepilogo-nd">—</span>';
+    var absV = Math.abs(v);
+    var sign = v < 0 ? '-' : '';
+    var num;
+    if (absV >= 1000000) num = sign + (absV / 1000000).toFixed(2) + '&nbsp;M';
+    else if (absV >= 1000) num = sign + (absV / 1000).toFixed(1) + 'k';
+    else num = v.toFixed(0);
+    return '&#8364;&nbsp;' + num;
+  }
+
+  var html = '<div class="stat-riepilogo-wrap" style="margin-top:16px;">';
+  html += '<div class="stat-riepilogo-title">&#128197;&nbsp;Confronto mese per mese &mdash; Fatturato ' + annoSel + ' vs ' + annoPrev + '</div>';
+  html += '<div style="overflow-x:auto;">';
+  html += '<table class="stat-riepilogo-table" style="min-width:520px;">';
+  html += '<thead><tr>';
+  html += '<th>Mese</th>';
+  html += '<th style="text-align:right;">' + annoSel + '</th>';
+  html += '<th style="text-align:right;">' + annoPrev + '</th>';
+  html += '<th style="text-align:right;">Incr. &#8364;</th>';
+  html += '<th style="text-align:right;">Incr. %</th>';
+  html += '</tr></thead><tbody>';
+
+  var hasAnyRow = false;
+  for (var m = 0; m < 12; m++) {
+    var vSel  = mesiSel[m];
+    var vPrev = mesiPrev[m];
+    if (vSel === null && vPrev === null) continue;
+    hasAnyRow = true;
+
+    // Incremento assoluto
+    var incrEurHtml;
+    if (vSel !== null && vPrev !== null) {
+      var delta = vSel - vPrev;
+      var signD = delta >= 0 ? '+' : '';
+      var clsD  = delta >= 0 ? 'positivo' : 'negativo';
+      incrEurHtml = '<span class="stat-incremento-val ' + clsD + '" style="font-size:0.86rem;">' + signD + fmtEur(delta) + '</span>';
+    } else {
+      incrEurHtml = '<span class="stat-riepilogo-nd">—</span>';
+    }
+
+    // Incremento percentuale
+    var incrPctHtml;
+    if (vSel !== null && vPrev !== null && vPrev !== 0) {
+      var inc   = ((vSel - vPrev) / vPrev) * 100;
+      var signP = inc >= 0 ? '+' : '';
+      var clsP  = inc >= 0 ? 'positivo' : 'negativo';
+      incrPctHtml = '<span class="stat-incremento-val ' + clsP + '" style="font-size:0.86rem;">' + signP + inc.toFixed(1) + '%</span>';
+    } else if (vPrev === 0 && vSel !== null) {
+      incrPctHtml = '<span class="stat-riepilogo-nd">N/D</span>';
+    } else {
+      incrPctHtml = '<span class="stat-riepilogo-nd">—</span>';
+    }
+
+    var selHtml  = vSel  !== null ? fmtEur(vSel)  : '<span class="stat-riepilogo-nd">—</span>';
+    var prevHtml = vPrev !== null ? fmtEur(vPrev) : '<span class="stat-riepilogo-nd">—</span>';
+
+    html += '<tr>';
+    html += '<td class="stat-riepilogo-anno">' + MESI_NOMI_FULL[m] + '</td>';
+    html += '<td class="stat-riepilogo-tot">' + selHtml + '</td>';
+    html += '<td class="stat-riepilogo-tot" style="opacity:0.7;">' + prevHtml + '</td>';
+    html += '<td class="stat-riepilogo-incr">' + incrEurHtml + '</td>';
+    html += '<td class="stat-riepilogo-incr">' + incrPctHtml + '</td>';
+    html += '</tr>';
+  }
+
+  if (!hasAnyRow) { div.innerHTML = ''; return; }
+
+  html += '</tbody></table></div></div>';
+  div.innerHTML = html;
+}
+
 /** Aggiorna labels, input, filtri, grafici e riepilogo per l'azienda e l'anno correntemente selezionati */
 function _aggiornaContenutoStatistiche(nomeAz) {
   renderStatInputs('fatturato', nomeAz);
@@ -7309,6 +7404,7 @@ function _aggiornaContenutoStatistiche(nomeAz) {
   disegnaGraficoStat('utili', nomeAz);
   renderRiepilogoAnni('fatturato', nomeAz);
   renderRiepilogoAnni('utili', nomeAz);
+  renderRiepilogoMensile(nomeAz);
 }
 
 /** Restituisce l'elenco di tutti i nomi azienda unici dallo state.partners */
@@ -7494,8 +7590,8 @@ async function doLogin() {
   errEl.classList.remove('show');
   if (!email || !password) { errEl.textContent = 'Inserisci email e password.'; errEl.classList.add('show'); return; }
 
-  // Controlla Admin
-  const admin = authLs(AUTH_KEYS.admin);
+  // Controlla Admin (credenziali lette da state, già caricato da Firestore al DOMContentLoaded)
+  const admin = state.authAdmin;
   if (admin && email === admin.email.toLowerCase() && password === admin.password) {
     authSsSave(AUTH_KEYS.session, { ruolo: 'admin', email: admin.email, nome: admin.nome || 'Admin', cognome: admin.cognome || '' });
     await _avviaDopoLogin();
@@ -7503,7 +7599,7 @@ async function doLogin() {
   }
 
   // Controlla utenti PM / Consulente
-  const users = authLs(AUTH_KEYS.users) || [];
+  const users = state.authUsers || [];
   const user  = users.find(u => u.email.toLowerCase() === email && u.password === password);
   if (user) {
     authSsSave(AUTH_KEYS.session, { ruolo: user.ruolo, email: user.email, nome: user.nome || '', cognome: user.cognome || '' });
@@ -7550,6 +7646,7 @@ function avviaSessione() {
   // Pulsante Admin (solo per admin)
   if (sess.ruolo === 'admin') {
     document.getElementById('nav-admin-btn').style.display = '';
+    document.getElementById('nav-btn-esporta').style.display = '';
   }
 
   // Applica classe body per CSS consulente
@@ -7590,7 +7687,7 @@ function renderAdminPanel() {
 function renderAdminUsersList() {
   const container = document.getElementById('admin-users-list');
   const emptyEl   = document.getElementById('admin-users-empty');
-  const users = authLs(AUTH_KEYS.users) || [];
+  const users = state.authUsers || [];
   container.innerHTML = '';
 
   if (users.length === 0) {
@@ -7647,17 +7744,18 @@ function adminAddUser() {
   }
 
   // Controlla duplicati (anche contro l'admin)
-  const admin = authLs(AUTH_KEYS.admin);
+  const admin = state.authAdmin;
   if (admin && email === admin.email.toLowerCase()) {
     return _showAuthAlert('alert-new-err', true, 'Questa email corrisponde all\'account Admin.');
   }
-  const users = authLs(AUTH_KEYS.users) || [];
+  const users = state.authUsers || [];
   if (users.some(u => u.email.toLowerCase() === email)) {
     return _showAuthAlert('alert-new-err', true, 'Esiste già un account con questa email.');
   }
 
   users.push({ id: _authUid(), email, password, nome, cognome, ruolo });
-  authLsSave(AUTH_KEYS.users, users);
+  state.authUsers = users;
+  save();
 
   // Reset form
   ['new-nome','new-cognome','new-email','new-password'].forEach(id => document.getElementById(id).value = '');
@@ -7671,13 +7769,14 @@ function adminAddUser() {
 // ADMIN: ELIMINA UTENTE
 // =========================================================
 function adminDeleteUser(idx) {
-  const users = authLs(AUTH_KEYS.users) || [];
+  const users = state.authUsers || [];
   if (idx < 0 || idx >= users.length) return;
   const u = users[idx];
   const nomeCompleto = ((u.nome || '') + ' ' + (u.cognome || '')).trim() || u.email;
   if (!confirm('Eliminare l\'account di ' + nomeCompleto + '?\nL\'operazione non è reversibile.')) return;
   users.splice(idx, 1);
-  authLsSave(AUTH_KEYS.users, users);
+  state.authUsers = users;
+  save();
   renderAdminUsersList();
 }
 
@@ -7692,7 +7791,7 @@ function adminSaveAccount() {
   _showAuthAlert('alert-acc-err', false);
   _showAuthAlert('alert-acc-ok', false);
 
-  const admin = authLs(AUTH_KEYS.admin);
+  const admin = state.authAdmin;
   if (!admin) return;
 
   if (!pwdCurrent) {
@@ -7707,7 +7806,7 @@ function adminSaveAccount() {
 
   // Controlla che la nuova email non sia già usata da altri account
   if (emailNew && emailNew !== admin.email.toLowerCase()) {
-    const users = authLs(AUTH_KEYS.users) || [];
+    const users = state.authUsers || [];
     if (users.some(u => u.email.toLowerCase() === emailNew)) {
       return _showAuthAlert('alert-acc-err', true, 'Questa email è già usata da un altro account.');
     }
@@ -7715,7 +7814,8 @@ function adminSaveAccount() {
 
   if (emailNew) admin.email = emailNew;
   if (pwdNew)   admin.password = pwdNew;
-  authLsSave(AUTH_KEYS.admin, admin);
+  state.authAdmin = admin;
+  save();
 
   // Aggiorna sessione
   const sess = authSsGet(AUTH_KEYS.session);
@@ -7743,6 +7843,30 @@ function _showAuthAlert(id, show, msg) {
 function _authUid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
+
+// =========================================================
+// INIZIALIZZAZIONE PAGINA
+// Pre-carica lo stato da Firestore (incluso authAdmin/authUsers)
+// PRIMA di mostrare il login, così le credenziali sono già in memoria
+// =========================================================
+document.addEventListener('DOMContentLoaded', async function() {
+  const loadingEl = document.getElementById('loading-overlay');
+  const loginEl   = document.getElementById('login-overlay');
+
+  // Pre-carica stato (authAdmin/authUsers vengono popolati da load())
+  await load();
+
+  // Se c'è già una sessione attiva, avvia direttamente l'applicazione
+  const sess = authSsGet(AUTH_KEYS.session);
+  if (sess) {
+    await _avviaDopoLogin();
+    return;
+  }
+
+  // Altrimenti mostra la schermata di login
+  if (loginEl)   loginEl.classList.remove('hidden');
+  if (loadingEl) loadingEl.style.display = 'none';
+});
 </script>
 
 <script>
