@@ -2758,6 +2758,30 @@
   </div>
 </div>
 
+<!-- ===== MODALE TRASFERIMENTO PERSONA ===== -->
+<div class="modal-overlay" id="modal-trasferimento-persona" style="display:none;" onclick="closeTrasferisciPersonaMbseModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">&#8651; Trasferisci Persona</div>
+    <div class="modal-subtitle" id="mbse-tp-label">Sposta la persona a un&rsquo;altra azienda</div>
+    <div class="modal-field">
+      <label>Partner di destinazione</label>
+      <select id="mbse-tp-partner" onchange="onMbseTpPartnerChange()"></select>
+    </div>
+    <div class="modal-field">
+      <label>Consulente di destinazione</label>
+      <select id="mbse-tp-consulente" onchange="onMbseTpConsulenteChange()"></select>
+    </div>
+    <div class="modal-field">
+      <label>Azienda di destinazione</label>
+      <select id="mbse-tp-azienda"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeTrasferisciPersonaMbseModal()">Annulla</button>
+      <button class="btn btn-primary" id="mbse-tp-confirm" onclick="eseguiTrasferimentoPersona()">&#8651; Trasferisci</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PAGE: HOME ===== -->
 <div class="page active" id="page-home">
   <div class="home-hero">
@@ -3779,6 +3803,7 @@ function renderAzienda(container, pi, ci, ai) {
         <input type="checkbox" ${p.iscritta !== false ? 'checked' : ''} onchange="togglePersonaIscritta(${pi},${ci},${ai},${pIdx},this.checked)">
       </label>
       <span class="persona-nome" style="${p.iscritta === false ? 'opacity:0.5;text-decoration:line-through;' : ''}">${escHtml(p.nome)} ${escHtml(p.cognome)}</span>
+      <button class="btn" style="padding:2px 6px;font-size:0.68rem;color:var(--rosa);border:1px solid rgba(179,70,141,0.3);background:transparent;border-radius:5px;cursor:pointer;line-height:1.2;" onclick="openTrasferisciPersonaMbseModal(${pi},${ci},${ai},${pIdx})" title="Trasferisci a un'altra azienda">&#8651;</button>
       <button class="btn btn-danger" style="padding:2px 7px;font-size:0.72rem;" onclick="removePersonaAzienda(${pi},${ci},${ai},${pIdx})">&#215;</button>
     </div>`).join('');
 
@@ -4132,9 +4157,12 @@ function renderIscritti() {
         </select>
       </td>
       <td class="td-number">
-        <input class="td-input ${isTop5 ? 'oro-value' : ''}" type="number" min="0" max="9999" step="0.1"
-          value="${isc.fatturato||''}" style="min-width:80px;"
-          onchange="updateIscritto(${globalIdx},'fatturato',this.value);renderIscritti()">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input class="td-input ${isTop5 ? 'oro-value' : ''}" type="number" min="0" max="9999" step="0.1"
+            value="${isc.fatturato||''}" style="min-width:80px;"
+            onchange="updateIscritto(${globalIdx},'fatturato',this.value);renderIscritti()">
+          ${checkAlertFatturatiConsecutivi(isc.azienda) ? '<span title="Calo fatturato per 2 mesi consecutivi rispetto al mese di edizione" style="color:#e05555;font-size:0.88rem;cursor:default;flex-shrink:0;" aria-label="Attenzione fatturato">&#9888;</span>' : ''}
+        </div>
       </td>
       <td>
         <select class="td-select" onchange="updateIscritto(${globalIdx},'corso',this.value)" style="min-width:120px;">
@@ -6184,6 +6212,139 @@ function chiudiModaleTrasferimento(ev) {
   _trasf = { pi: null, ci: null, ai: null };
 }
 
+// ===== TRASFERIMENTO PERSONA TRA AZIENDE (MBS EMILIA) =====
+var _trsfPersona = { pi: null, ci: null, ai: null, pIdx: null };
+
+function openTrasferisciPersonaMbseModal(pi, ci, ai, pIdx) {
+  _trsfPersona = { pi: pi, ci: ci, ai: ai, pIdx: pIdx };
+  var az = state.partners[pi].consulenti[ci].aziende[ai];
+  var persona = az.persone[pIdx];
+  var lbl = document.getElementById('mbse-tp-label');
+  if (lbl) lbl.textContent = 'Trasferisci ' + persona.nome + ' ' + persona.cognome +
+    ' — da ' + state.partners[pi].name + ' / ' + state.partners[pi].consulenti[ci].name + ' / ' + az.name;
+  // Popola partner
+  var selP = document.getElementById('mbse-tp-partner');
+  selP.innerHTML = '';
+  state.partners.forEach(function(p, pIdx2) {
+    var opt = document.createElement('option');
+    opt.value = pIdx2;
+    opt.textContent = p.name;
+    if (pIdx2 === pi) opt.selected = true;
+    selP.appendChild(opt);
+  });
+  _mbseTpPopolaConsulenti(pi);
+  document.getElementById('modal-trasferimento-persona').style.display = 'flex';
+}
+
+function _mbseTpPopolaConsulenti(piDest) {
+  var selC = document.getElementById('mbse-tp-consulente');
+  selC.innerHTML = '';
+  var partner = state.partners[piDest];
+  if (!partner || partner.consulenti.length === 0) {
+    selC.innerHTML = '<option value="" disabled>— Nessun consulente —</option>';
+    _mbseTpPopolaAziende(piDest, -1);
+    return;
+  }
+  partner.consulenti.forEach(function(c, cIdx) {
+    var opt = document.createElement('option');
+    opt.value = cIdx;
+    opt.textContent = c.name;
+    selC.appendChild(opt);
+  });
+  _mbseTpPopolaAziende(piDest, parseInt(selC.value) || 0);
+}
+
+function onMbseTpPartnerChange() {
+  var piDest = parseInt(document.getElementById('mbse-tp-partner').value);
+  _mbseTpPopolaConsulenti(piDest);
+}
+
+function onMbseTpConsulenteChange() {
+  var piDest = parseInt(document.getElementById('mbse-tp-partner').value);
+  var ciDest = parseInt(document.getElementById('mbse-tp-consulente').value);
+  _mbseTpPopolaAziende(piDest, ciDest);
+}
+
+function _mbseTpPopolaAziende(piDest, ciDest) {
+  var selA = document.getElementById('mbse-tp-azienda');
+  selA.innerHTML = '';
+  var src = _trsfPersona;
+  var cons = (state.partners[piDest] && ciDest >= 0) ? state.partners[piDest].consulenti[ciDest] : null;
+  var btnConfirm = document.getElementById('mbse-tp-confirm');
+  if (!cons || !cons.aziende || cons.aziende.length === 0) {
+    selA.innerHTML = '<option value="" disabled>— Nessuna azienda —</option>';
+    if (btnConfirm) btnConfirm.disabled = true;
+    return;
+  }
+  var hasValid = false;
+  cons.aziende.forEach(function(az, azIdx) {
+    if (piDest === src.pi && ciDest === src.ci && azIdx === src.ai) return; // sorgente
+    var opt = document.createElement('option');
+    opt.value = azIdx;
+    opt.textContent = az.name;
+    selA.appendChild(opt);
+    hasValid = true;
+  });
+  if (!hasValid) {
+    selA.innerHTML = '<option value="" disabled>— Nessuna altra azienda disponibile —</option>';
+    if (btnConfirm) btnConfirm.disabled = true;
+  } else {
+    if (btnConfirm) btnConfirm.disabled = false;
+  }
+}
+
+function closeTrasferisciPersonaMbseModal(ev) {
+  if (ev && ev.target !== document.getElementById('modal-trasferimento-persona')) return;
+  document.getElementById('modal-trasferimento-persona').style.display = 'none';
+  _trsfPersona = { pi: null, ci: null, ai: null, pIdx: null };
+}
+
+function eseguiTrasferimentoPersona() {
+  var src = _trsfPersona;
+  if (src.pi === null) return;
+  var piDest = parseInt(document.getElementById('mbse-tp-partner').value);
+  var ciDest = parseInt(document.getElementById('mbse-tp-consulente').value);
+  var aiDest = parseInt(document.getElementById('mbse-tp-azienda').value);
+  if (isNaN(piDest) || isNaN(ciDest) || isNaN(aiDest)) {
+    toast('Seleziona un\'azienda di destinazione'); return;
+  }
+  if (piDest === src.pi && ciDest === src.ci && aiDest === src.ai) {
+    toast('La persona è già in questa azienda'); return;
+  }
+  var azSrc  = state.partners[src.pi].consulenti[src.ci].aziende[src.ai];
+  var persona = azSrc.persone[src.pIdx];
+  var azDest  = state.partners[piDest].consulenti[ciDest].aziende[aiDest];
+  // Controlla duplicati
+  var dup = (azDest.persone || []).some(function(p) {
+    return p.nome.toLowerCase() === persona.nome.toLowerCase() &&
+           p.cognome.toLowerCase() === persona.cognome.toLowerCase();
+  });
+  if (dup) { toast('Persona già presente nell\'azienda di destinazione'); return; }
+  var partnerDestName = state.partners[piDest].name;
+  var consDestName    = state.partners[piDest].consulenti[ciDest].name;
+  var azDestName      = azDest.name;
+  // Aggiorna tutti i record iscritti collegati (storico intatto, solo azienda/partner/consulente correnti)
+  state.iscritti.forEach(function(isc) {
+    if (
+      (isc.nome   || '').toLowerCase() === (persona.nome   || '').toLowerCase() &&
+      (isc.cognome|| '').toLowerCase() === (persona.cognome|| '').toLowerCase() &&
+      isc.azienda === azSrc.name
+    ) {
+      isc.azienda    = azDestName;
+      isc.partner    = partnerDestName;
+      isc.consulente = consDestName;
+    }
+  });
+  // Sposta la persona
+  if (!azDest.persone) azDest.persone = [];
+  azDest.persone.push(persona);
+  azSrc.persone.splice(src.pIdx, 1);
+  closeTrasferisciPersonaMbseModal();
+  save();
+  renderPartners();
+  toast('Trasferita ' + persona.nome + ' ' + persona.cognome + ' a ' + azDestName);
+}
+
 // ===== FUNZIONALITA' 2: % CLIENTI CON FATTURATO IN CRESCITA PER EDIZIONE =====
 // Struttura dati: state.crescitaPerEdizione = { 'Maggio 2026': 72, 'Giugno 2026': 85, ... }
 
@@ -7546,6 +7707,46 @@ function updateAziendaQuotaMinima(pi, ci, ai, val) {
   const az = state.partners[pi].consulenti[ci].aziende[ai];
   az.quotaMinima = (val === '' || val === null) ? null : parseFloat(val);
   save();
+}
+
+// ===== ALERT FATTURATO CONSECUTIVO =====
+
+/**
+ * In MBS Emilia le statistiche usano nomeAzienda come chiave diretta.
+ * findAziendaId restituisce semplicemente il nome (mantenuto per simmetria con AB).
+ */
+function findAziendaId(nomeAzienda) {
+  return nomeAzienda || null;
+}
+
+/**
+ * Verifica se il fatturato dell'azienda è calato per 2 mesi consecutivi
+ * immediatamente precedenti all'edizione corrente.
+ * Struttura dati: state.statistiche.fatturato[nomeAzienda][annoString][meseIndex] (0-based)
+ */
+function checkAlertFatturatiConsecutivi(nomeAzienda) {
+  if (!nomeAzienda || !state.statistiche || !state.statistiche.fatturato) return false;
+  var fatturato = state.statistiche.fatturato[nomeAzienda];
+  if (!fatturato) return false;
+  var MESI_NOMI_CHK = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                       'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var parts = (state.edition || '').trim().split(' ');
+  var meseEd = MESI_NOMI_CHK.indexOf(parts[0]); // 0-based
+  var annoEd = parseInt(parts[1]);
+  if (meseEd < 0 || isNaN(annoEd)) return false;
+  function _getMeseVal(anno, m0) {
+    if (m0 < 0) { anno--; m0 += 12; }
+    var yearData = fatturato[String(anno)];
+    if (!Array.isArray(yearData)) return null;
+    var v = yearData[m0];
+    return (v !== null && v !== undefined && v !== '') ? parseFloat(v) : null;
+  }
+  var v3 = _getMeseVal(annoEd, meseEd - 3); // 3 mesi prima
+  var v2 = _getMeseVal(annoEd, meseEd - 2); // 2 mesi prima
+  var v1 = _getMeseVal(annoEd, meseEd - 1); // 1 mese prima
+  if (v3 === null || v2 === null || v1 === null) return false;
+  if (isNaN(v3) || isNaN(v2) || isNaN(v1)) return false;
+  return v2 < v3 && v1 < v2;
 }
 
 // ===== FILTRI REGISTRO ISCRITTI =====
